@@ -12,6 +12,7 @@ import SyncSection from "@/components/SyncSection";
 import ToolPanel from "@/components/ToolPanel";
 import DonateModal from "@/components/DonateModal";
 import ShareButton from "@/components/ShareButton";
+import InstallBuddy from "@/components/InstallBuddy";
 
 interface DrawingState {
   x: number | null;
@@ -180,6 +181,11 @@ function ClaudeBuddyInner() {
                 onHatch={handleHatch}
                 isDrawing={drawingState.isDrawing}
               />
+
+              {/* Install as Claude Code buddy */}
+              {drawingState.isComplete && buddy && (
+                <InstallBuddy buddy={buddy} />
+              )}
 
               {/* Share buttons */}
               {drawingState.isComplete && buddy && (
