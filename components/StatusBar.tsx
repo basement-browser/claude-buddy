@@ -26,28 +26,28 @@ export default function StatusBar({
   const colorHex = currentColor || "#------";
 
   return (
-    <div className="flex items-center gap-4 px-4 py-1.5 border-t border-[#333] bg-[#1a1a1a] text-[10px] font-mono text-[#666]">
+    <div className="flex items-center gap-4 px-3 py-1.5 bg-[#0D0E0C]/80 backdrop-blur-sm text-[10px] font-mono text-[#5A5550]">
       <span>
         X:{xLabel} Y:{yLabel}
       </span>
       <span className="flex items-center gap-1">
-        {isDrawing ? "PEN" : "PEN"}
+        PEN
         <span
-          className="inline-block w-3 h-3 border border-[#555]"
-          style={{ backgroundColor: currentColor || "#333" }}
+          className="inline-block w-3 h-3 border border-[#3A3530] rounded-sm"
+          style={{ backgroundColor: currentColor || "#2A2520" }}
         />
-        <span className="text-[#888]">{colorHex}</span>
+        <span className="text-[#8A8480]">{colorHex}</span>
       </span>
       <span>
         {pixelCount}/{totalPixels} PX
       </span>
       {isComplete && speciesName && (
-        <span className="text-[#aaa] ml-auto">
+        <span className="text-[#E8734A] ml-auto font-bold">
           BUDDY HATCHED — {speciesName.toUpperCase()}
         </span>
       )}
       {isDrawing && (
-        <span className="text-[#aaa] ml-auto animate-pulse">
+        <span className="text-[#E8734A] ml-auto animate-pulse">
           HATCHING...
         </span>
       )}

@@ -3,6 +3,24 @@
 @theme inline {
   --font-pixel: var(--font-pixel);
   --font-mono: var(--font-mono);
+  --font-sans: var(--font-sans);
+}
+
+/* ── Design Tokens ── */
+:root {
+  --te-shell: #2A2520;
+  --te-bezel: #3A3530;
+  --te-screen: #0D0E0C;
+  --te-accent: #E8734A;
+  --te-accent-hover: #F0845C;
+  --te-text: #F5F0EB;
+  --te-text-secondary: #8A8480;
+  --te-text-muted: #5A5550;
+  --te-surface: #1E1B18;
+  --te-button: #2E2A26;
+  --te-button-border: #4A4540;
+  --te-page: #1A1714;
+  --te-inset: #141210;
 }
 
 * {
@@ -10,8 +28,8 @@
 }
 
 body {
-  background: #1a1a1a;
-  color: #ffffff;
+  background: var(--te-page);
+  color: var(--te-text);
   font-family: var(--font-mono), "JetBrains Mono", monospace;
 }
 
@@ -23,47 +41,225 @@ body {
   font-family: var(--font-mono), "JetBrains Mono", monospace;
 }
 
-/* CRT scanline overlay */
-.crt-overlay {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.03) 0px,
-    rgba(0, 0, 0, 0.03) 1px,
-    transparent 1px,
-    transparent 2px
-  );
+.font-sans {
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
 }
 
-/* Custom scrollbar */
+/* ── Device Shell ── */
+.device-shell {
+  background: var(--te-shell);
+  border: 2px solid var(--te-bezel);
+  border-radius: 16px;
+  box-shadow:
+    0 2px 0 0 #1A1714,
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  overflow: hidden;
+}
+
+/* ── CRT Screen ── */
+.crt-screen {
+  position: relative;
+  border-radius: 20px / 26px;
+  overflow: hidden;
+  background: var(--te-screen);
+  box-shadow:
+    inset 0 0 80px rgba(0, 0, 0, 0.6),
+    inset 0 0 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Scanlines */
+.crt-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 1px,
+    rgba(0, 0, 0, 0.06) 1px,
+    rgba(0, 0, 0, 0.06) 2px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Ambient glow */
+.crt-screen::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  box-shadow:
+    0 0 40px rgba(232, 115, 74, 0.08),
+    0 0 80px rgba(232, 115, 74, 0.04);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Screen bezel frame */
+.crt-bezel {
+  padding: 6px;
+  background: #1A1714;
+  border-radius: 24px / 30px;
+  border: 1px solid var(--te-bezel);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Tactile Buttons ── */
+.te-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--te-text-secondary);
+  background: var(--te-button);
+  border: 1px solid var(--te-button-border);
+  border-radius: 6px;
+  box-shadow:
+    0 2px 0 0 #1A1714,
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+.te-button:hover {
+  color: var(--te-text);
+  background: #383430;
+  border-color: #5A5550;
+}
+
+.te-button:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 0px 0 0 #1A1714,
+    0 0px 1px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.te-button.active {
+  color: var(--te-text);
+  background: #3A3530;
+  border-color: var(--te-accent);
+  box-shadow:
+    0 2px 0 0 #1A1714,
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 8px rgba(232, 115, 74, 0.15);
+}
+
+.te-button.accent {
+  color: #fff;
+  background: var(--te-accent);
+  border-color: #F0845C;
+  box-shadow:
+    0 2px 0 0 #8B4A30,
+    0 1px 3px rgba(232, 115, 74, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.te-button.accent:hover {
+  background: var(--te-accent-hover);
+}
+
+.te-button.accent:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 0px 0 0 #8B4A30,
+    0 0px 1px rgba(232, 115, 74, 0.3),
+    inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.te-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.te-button:disabled:hover {
+  color: var(--te-text-secondary);
+  background: var(--te-button);
+  border-color: var(--te-button-border);
+}
+
+/* ── Labels ── */
+.te-label {
+  font-family: var(--font-mono), monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--te-text-muted);
+}
+
+/* ── Inset Panel (LCD readout feel) ── */
+.te-inset {
+  background: var(--te-inset);
+  border: 1px solid #0A0908;
+  border-radius: 8px;
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* ── Scrollbar ── */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: var(--te-shell);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--te-bezel);
   border-radius: 3px;
 }
 
-/* Blinking cursor for input */
+/* ── Input ── */
 input::placeholder {
-  color: #444;
+  color: var(--te-text-muted);
 }
 
 input:focus {
   outline: none;
 }
 
-/* Pixel font class */
+/* ── Pixel font ── */
 .text-pixel {
   font-family: var(--font-pixel), monospace;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: none;
+}
+
+/* ── LED indicator ── */
+.te-led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--te-accent);
+  box-shadow: 0 0 6px rgba(232, 115, 74, 0.5);
+}
+
+.te-led.off {
+  background: var(--te-text-muted);
+  box-shadow: none;
+}
+
+/* ── Divider groove ── */
+.te-groove {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--te-bezel) 20%,
+    var(--te-bezel) 80%,
+    transparent
+  );
 }
