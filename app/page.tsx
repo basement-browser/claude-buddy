@@ -4,14 +4,14 @@ import { useState, useCallback, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { generateBuddy } from "@/lib/generate-buddy";
 import { Buddy } from "@/lib/types";
-import TopBar from "@/components/TopBar";
-import ToolPanel from "@/components/ToolPanel";
 import BuddyCanvas, { BuddyCanvasHandle } from "@/components/BuddyCanvas";
 import InfoPanel from "@/components/InfoPanel";
 import StatusBar from "@/components/StatusBar";
 import HatchInput from "@/components/HatchInput";
 import SyncSection from "@/components/SyncSection";
+import ToolPanel from "@/components/ToolPanel";
 import DonateModal from "@/components/DonateModal";
+import ShareButton from "@/components/ShareButton";
 
 interface DrawingState {
   x: number | null;
@@ -43,7 +43,6 @@ function ClaudeBuddyInner() {
   const initialName = searchParams.get("name") || "";
   const hasAutoHatched = useRef(false);
 
-  // Measure the canvas container so grid goes edge-to-edge
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -90,7 +89,6 @@ function ClaudeBuddyInner() {
     canvasRef.current?.exportPNG();
   }, []);
 
-  // Auto-hatch from URL param
   useEffect(() => {
     if (initialName && !hasAutoHatched.current) {
       hasAutoHatched.current = true;
@@ -100,79 +98,120 @@ function ClaudeBuddyInner() {
   }, [initialName, handleHatch]);
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Input */}
-      <HatchInput
-        onHatch={handleHatch}
-        initialName={initialName}
-        isDrawing={drawingState.isDrawing}
-      />
-
-      {/* Sync with Claude Code */}
-      <SyncSection
-        onHatch={handleHatch}
-        isDrawing={drawingState.isDrawing}
-      />
-
-      {/* Main editor area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left - Tools */}
-        <ToolPanel isDrawing={drawingState.isDrawing} />
-
-        {/* Center - Canvas */}
-        <div ref={containerRef} className="flex-1 flex items-center justify-center bg-[#111] relative overflow-hidden">
-          <BuddyCanvas
-            ref={canvasRef}
-            buddy={buddy}
-            showGrid={showGrid}
-            onDrawingStateChange={handleDrawingStateChange}
-            cellSize={cellSize}
-          />
+    <div className="flex items-center justify-center min-h-screen p-3 md:p-6 lg:p-8">
+      <div className="device-shell w-full max-w-[1200px]">
+        {/* ── Device Header ── */}
+        <div className="flex items-center justify-between px-4 lg:px-5 py-3 border-b border-[#3A3530]">
+          <div className="flex items-center gap-3">
+            <div className="te-led" />
+            <h1 className="font-mono text-[10px] lg:text-[11px] font-bold tracking-[0.15em] uppercase text-[#F5F0EB]">
+              Claude Buddy Hatchery
+            </h1>
+          </div>
+          <div className="font-mono text-[9px] tracking-[0.1em] uppercase text-[#5A5550]">
+            model CB-1.0
+          </div>
         </div>
 
-        {/* Right - Info */}
-        <InfoPanel
-          currentColor={drawingState.currentColor}
-          palette={buddy?.palette || ["#333", "#444", "#555", "#666"]}
-          buddy={buddy}
-          isComplete={drawingState.isComplete}
-          onSave={handleExport}
-        />
-      </div>
+        {/* ── Main Body: Horizontal on desktop, vertical on mobile ── */}
+        <div className="flex flex-col lg:flex-row">
 
-      {/* Status bar */}
-      <StatusBar
-        x={drawingState.x}
-        y={drawingState.y}
-        currentColor={drawingState.currentColor}
-        pixelCount={drawingState.pixelCount}
-        totalPixels={drawingState.totalPixels}
-        isComplete={drawingState.isComplete}
-        speciesName={buddy?.species || null}
-        isDrawing={drawingState.isDrawing}
-      />
+          {/* ── Left: CRT Screen ── */}
+          <div className="flex-1 min-w-0 p-3 md:p-4 lg:p-5">
+            <div className="crt-bezel">
+              <div className="crt-screen" style={{ aspectRatio: "1 / 1" }}>
+                <div ref={containerRef} className="w-full h-full relative">
+                  <BuddyCanvas
+                    ref={canvasRef}
+                    buddy={buddy}
+                    showGrid={showGrid}
+                    onDrawingStateChange={handleDrawingStateChange}
+                    cellSize={cellSize}
+                  />
+                  {/* Status overlay at bottom of screen */}
+                  <div className="absolute bottom-0 left-0 right-0 z-20">
+                    <StatusBar
+                      x={drawingState.x}
+                      y={drawingState.y}
+                      currentColor={drawingState.currentColor}
+                      pixelCount={drawingState.pixelCount}
+                      totalPixels={drawingState.totalPixels}
+                      isComplete={drawingState.isComplete}
+                      speciesName={buddy?.species || null}
+                      isDrawing={drawingState.isDrawing}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-2 border-t border-[#282828] bg-[#151515]">
-        <a
-          href="https://basementbrowser.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 text-[10px] font-mono text-[#666] hover:text-[#aaa] transition-colors"
-        >
-          <img
-            src="/basement-logo.webp"
-            alt="Basement"
-            className="w-5 h-5 rounded-sm"
-          />
-          <span>Built by the Basement Team</span>
-        </a>
-        <button
-          onClick={() => setShowDonate(true)}
-          className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider border border-[#444] text-[#888] hover:bg-[#444] hover:text-white transition-colors"
-        >
-          Buy us a coffee
-        </button>
+          {/* ── Right: Control Panel (scrollable on desktop) ── */}
+          <div className="lg:w-[320px] xl:w-[360px] lg:border-l border-t lg:border-t-0 border-[#3A3530] lg:overflow-y-auto lg:max-h-[calc(100vh-140px)]">
+            <div className="flex flex-col gap-4 p-3 md:p-4 lg:p-5">
+
+              {/* Input */}
+              <HatchInput
+                onHatch={handleHatch}
+                initialName={initialName}
+                isDrawing={drawingState.isDrawing}
+              />
+
+              {/* Control buttons */}
+              <ToolPanel
+                isDrawing={drawingState.isDrawing}
+                showGrid={showGrid}
+                onToggleGrid={() => setShowGrid((g) => !g)}
+                onClear={handleClear}
+                onExport={handleExport}
+              />
+
+              {/* Readout panel */}
+              <InfoPanel
+                currentColor={drawingState.currentColor}
+                palette={buddy?.palette || ["#333", "#444", "#555", "#666"]}
+                buddy={buddy}
+                isComplete={drawingState.isComplete}
+                onSave={handleExport}
+              />
+
+              {/* Sync section */}
+              <SyncSection
+                onHatch={handleHatch}
+                isDrawing={drawingState.isDrawing}
+              />
+
+              {/* Share buttons */}
+              {drawingState.isComplete && buddy && (
+                <ShareButton buddy={buddy} onSave={handleExport} />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="te-groove" />
+        <div className="flex items-center justify-between px-4 lg:px-5 py-3">
+          <a
+            href="https://basementbrowser.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-[10px] font-mono text-[#5A5550] hover:text-[#8A8480] transition-colors"
+          >
+            <img
+              src="/basement-logo.webp"
+              alt="Basement"
+              className="w-5 h-5 rounded-sm opacity-60"
+            />
+            <span>Built by the Basement Team</span>
+          </a>
+          <button
+            onClick={() => setShowDonate(true)}
+            className="te-button text-[9px]"
+          >
+            Buy us a coffee
+          </button>
+        </div>
       </div>
 
       <DonateModal isOpen={showDonate} onClose={() => setShowDonate(false)} />
@@ -184,7 +223,7 @@ export default function Home() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center h-screen bg-[#1a1a1a] text-[#444] font-mono text-sm">
+        <div className="flex items-center justify-center h-screen text-[#5A5550] font-mono text-sm">
           Loading Claude Buddy...
         </div>
       }

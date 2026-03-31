@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Buddy } from "@/lib/types";
 import { RARITY_COLORS } from "@/lib/species";
 import StatBar from "./StatBar";
-import ShareButton from "./ShareButton";
 
 interface InfoPanelProps {
   currentColor: string | null;
@@ -16,34 +15,33 @@ interface InfoPanelProps {
 
 export default function InfoPanel({ currentColor, palette, buddy, isComplete, onSave }: InfoPanelProps) {
   return (
-    <div className="flex flex-col gap-3 p-3 border-l border-[#333] bg-[#1a1a1a] w-[140px]">
-      {/* Color section */}
-      <div>
-        <div className="text-[9px] font-mono text-[#666] uppercase tracking-wider mb-1">
-          Color
-        </div>
-        <div
-          className="w-full aspect-square border border-[#444] mb-1"
-          style={{ backgroundColor: currentColor || "#333" }}
-        />
-        <div className="text-[9px] font-mono text-[#888] text-center">
-          {currentColor || "#------"}
-        </div>
-      </div>
+    <div className="te-inset p-3">
+      <div className="te-label mb-2">Readout</div>
 
-      {/* Palette section */}
-      <div>
-        <div className="text-[9px] font-mono text-[#666] uppercase tracking-wider mb-1">
-          Palette
+      <div className="flex gap-3 mb-3">
+        {/* Color display */}
+        <div>
+          <div
+            className="w-10 h-10 border border-[#3A3530] rounded-sm mb-1"
+            style={{ backgroundColor: currentColor || "#2A2520" }}
+          />
+          <div className="text-[8px] font-mono text-[#5A5550] text-center">
+            {currentColor || "#------"}
+          </div>
         </div>
-        <div className="grid grid-cols-4 gap-0.5">
-          {palette.map((color, i) => (
-            <div
-              key={i}
-              className="aspect-square border border-[#444]"
-              style={{ backgroundColor: color }}
-            />
-          ))}
+
+        {/* Palette */}
+        <div>
+          <div className="grid grid-cols-4 gap-0.5 mb-1">
+            {palette.map((color, i) => (
+              <div
+                key={i}
+                className="w-5 h-5 border border-[#3A3530] rounded-sm"
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </div>
+          <div className="text-[8px] font-mono text-[#5A5550]">Palette</div>
         </div>
       </div>
 
@@ -51,36 +49,36 @@ export default function InfoPanel({ currentColor, palette, buddy, isComplete, on
       <AnimatePresence>
         {isComplete && buddy && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             className="flex flex-col gap-2"
           >
-            <div className="border-t border-[#333] pt-2">
-              <div className="text-[11px] font-pixel text-[#ddd]">
+            <div className="te-groove my-1" />
+
+            <div className="flex items-center gap-2">
+              <div className="text-[11px] font-pixel text-[#F5F0EB]">
                 {buddy.species}
               </div>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span
-                  className="text-[9px] font-mono px-1.5 py-0.5 rounded-sm"
-                  style={{
-                    backgroundColor: RARITY_COLORS[buddy.rarity] + "20",
-                    color: RARITY_COLORS[buddy.rarity],
-                    border: `1px solid ${RARITY_COLORS[buddy.rarity]}40`,
-                  }}
-                >
-                  {buddy.rarity}
+              <span
+                className="text-[8px] font-mono px-1.5 py-0.5 rounded"
+                style={{
+                  backgroundColor: RARITY_COLORS[buddy.rarity] + "20",
+                  color: RARITY_COLORS[buddy.rarity],
+                  border: `1px solid ${RARITY_COLORS[buddy.rarity]}40`,
+                }}
+              >
+                {buddy.rarity}
+              </span>
+              {buddy.isShiny && (
+                <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-[#f59e0b20] text-[#f59e0b] border border-[#f59e0b40]">
+                  SHINY
                 </span>
-                {buddy.isShiny && (
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-sm bg-[#f59e0b20] text-[#f59e0b] border border-[#f59e0b40]">
-                    SHINY
-                  </span>
-                )}
-              </div>
+              )}
             </div>
 
             {/* Stats */}
-            <div className="flex flex-col gap-1.5 border-t border-[#333] pt-2">
+            <div className="flex flex-col gap-1.5 mt-1">
               <StatBar label="Vibe" value={buddy.stats.vibe} color="#4ade80" delay={0} />
               <StatBar label="Chaos" value={buddy.stats.chaos} color="#f87171" delay={0.1} />
               <StatBar label="Focus" value={buddy.stats.focus} color="#60a5fa" delay={0.2} />
@@ -88,19 +86,10 @@ export default function InfoPanel({ currentColor, palette, buddy, isComplete, on
             </div>
 
             {/* Soul */}
-            <div className="border-t border-[#333] pt-2">
-              <div className="text-[9px] font-mono text-[#666] uppercase tracking-wider mb-1">
-                Soul
-              </div>
-              <p className="text-[10px] font-mono text-[#aaa] leading-relaxed italic">
-                &ldquo;{buddy.soulDescription}&rdquo;
-              </p>
-            </div>
-
-            {/* Save & Share */}
-            <div className="border-t border-[#333] pt-2">
-              <ShareButton buddy={buddy} onSave={onSave} />
-            </div>
+            <div className="te-groove my-1" />
+            <p className="text-[10px] font-mono text-[#8A8480] leading-relaxed italic">
+              &ldquo;{buddy.soulDescription}&rdquo;
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

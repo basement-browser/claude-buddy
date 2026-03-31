@@ -53,34 +53,34 @@ export default function DonateModal({ isOpen, onClose }: DonateModalProps) {
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative z-10 flex flex-col items-center gap-4 p-6 bg-[#1a1a1a] border border-[#333] max-w-sm w-full mx-4"
+        className="relative z-10 flex flex-col items-center gap-4 p-6 device-shell max-w-sm w-full mx-4"
       >
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-[#555] hover:text-[#aaa] text-xs font-mono transition-colors"
+          className="absolute top-3 right-3 te-button text-[9px] px-2 py-1"
         >
-          [ESC]
+          ESC
         </button>
 
         {/* Header */}
         <div className="text-center">
-          <div className="text-[11px] font-pixel text-[#ddd] tracking-wider uppercase">
+          <div className="text-[11px] font-pixel text-[#F5F0EB] tracking-wider uppercase">
             Buy us a coffee
           </div>
-          <div className="text-[9px] font-mono text-[#555] mt-1">
+          <div className="text-[9px] font-mono text-[#5A5550] mt-1">
             Send USDC on Solana
           </div>
         </div>
 
         {/* QR Code */}
-        <div className="p-3 bg-[#111] border border-[#282828]">
-          <div className="p-2 bg-[#0a0a0a]">
+        <div className="te-inset p-3">
+          <div className="p-2 bg-[#0D0E0C] rounded">
             <QRCodeSVG
               value={`solana:${WALLET}`}
               size={180}
-              bgColor="#0a0a0a"
-              fgColor="#888888"
+              bgColor="#0D0E0C"
+              fgColor="#8A8480"
               level="M"
               style={{ display: "block" }}
             />
@@ -89,26 +89,24 @@ export default function DonateModal({ isOpen, onClose }: DonateModalProps) {
 
         {/* Solana + USDC label */}
         <div className="flex items-center gap-2">
-          <span className="text-[9px] font-mono px-2 py-0.5 bg-[#222] border border-[#333] text-[#9945FF]">
+          <span className="text-[9px] font-mono px-2 py-0.5 te-inset text-[#9945FF]">
             SOLANA
           </span>
-          <span className="text-[9px] font-mono px-2 py-0.5 bg-[#222] border border-[#333] text-[#2775CA]">
+          <span className="text-[9px] font-mono px-2 py-0.5 te-inset text-[#2775CA]">
             USDC
           </span>
         </div>
 
         {/* Wallet address */}
         <div className="w-full">
-          <div className="text-[8px] font-mono text-[#555] uppercase tracking-wider mb-1">
-            Wallet Address
-          </div>
+          <div className="te-label mb-1">Wallet Address</div>
           <div className="flex items-center gap-1">
-            <code className="flex-1 text-[9px] font-mono text-[#888] bg-[#111] border border-[#282828] px-2 py-1.5 truncate select-all">
+            <code className="flex-1 text-[9px] font-mono text-[#8A8480] te-inset px-2 py-1.5 truncate select-all">
               {WALLET}
             </code>
             <button
               onClick={handleCopy}
-              className="shrink-0 px-2 py-1.5 text-[9px] font-mono text-[#666] border border-[#333] hover:bg-[#333] hover:text-[#ccc] transition-colors"
+              className="te-button text-[9px]"
             >
               {copied ? "OK!" : "COPY"}
             </button>
@@ -116,7 +114,7 @@ export default function DonateModal({ isOpen, onClose }: DonateModalProps) {
         </div>
 
         {/* Footer note */}
-        <div className="text-[8px] font-mono text-[#444] text-center leading-relaxed">
+        <div className="text-[8px] font-mono text-[#5A5550] text-center leading-relaxed">
           Only send USDC on the Solana network to this address.
           <br />
           Other tokens or networks will be lost.

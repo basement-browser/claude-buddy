@@ -105,20 +105,15 @@ export default function ShareButton({ buddy, onSave }: ShareButtonProps) {
   ];
 
   return (
-    <div className="flex flex-col gap-1.5">
-      {/* Save Image */}
-      <button
-        onClick={onSave}
-        className="w-full px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider border border-[#555] text-[#ccc] hover:bg-[#444] hover:text-white transition-colors"
-      >
-        Save Image
-      </button>
-
-      {/* Social share row */}
-      <div className="text-[9px] font-mono text-[#666] uppercase tracking-wider">
-        Share to
-      </div>
-      <div className="grid grid-cols-4 gap-1">
+    <div>
+      <div className="te-label mb-2">Share</div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onSave}
+          className="te-button accent text-[9px]"
+        >
+          Save Image
+        </button>
         {socialButtons.map(({ platform, label, onClick }) => (
           <button
             key={platform}
@@ -128,10 +123,10 @@ export default function ShareButton({ buddy, onSave }: ShareButtonProps) {
                 ? `Copy link for ${label}`
                 : `Share on ${label}`
             }
-            className="flex flex-col items-center gap-0.5 px-1 py-1.5 text-[8px] font-mono uppercase border border-[#444] text-[#999] hover:bg-[#444] hover:text-white transition-colors relative"
+            className="te-button text-[9px] px-2"
           >
             {copiedFor === platform ? (
-              <span className="text-[8px] text-green-400">Copied!</span>
+              <span className="text-[8px] text-[#4ade80]">OK</span>
             ) : (
               <SocialIcon platform={platform} />
             )}

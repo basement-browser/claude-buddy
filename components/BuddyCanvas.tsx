@@ -33,7 +33,33 @@ interface BuddyCanvasProps {
   cellSize: number;
 }
 
-// Find eye pixel coordinates for a buddy (palette index 3 pixels)
+// Synthesize a subtle pop sound using Web Audio API
+function createPopSound(audioCtx: AudioContext, index: number, total: number) {
+  const t = audioCtx.currentTime;
+
+  // Oscillator: short sine burst with pitch variation
+  const osc = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+
+  // Pitch rises slightly through the sequence for a satisfying build
+  const baseFreq = 600 + (index / total) * 400;
+  const variation = (Math.random() - 0.5) * 120;
+  osc.frequency.setValueAtTime(baseFreq + variation, t);
+  osc.frequency.exponentialRampToValueAtTime(200 + variation, t + 0.08);
+  osc.type = "sine";
+
+  // Quick attack, fast decay — percussive pop envelope
+  gainNode.gain.setValueAtTime(0, t);
+  gainNode.gain.linearRampToValueAtTime(0.08, t + 0.005);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+
+  osc.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+
+  osc.start(t);
+  osc.stop(t + 0.07);
+}
+
 function findEyePixels(buddy: Buddy): { x: number; y: number }[] {
   const eyes: { x: number; y: number }[] = [];
   for (let y = 0; y < GRID_SIZE; y++) {
@@ -58,6 +84,7 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
     const animationRef = useRef<number | null>(null);
     const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
     const blinkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const audioCtxRef = useRef<AudioContext | null>(null);
 
     const cleanup = useCallback(() => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
@@ -94,24 +121,18 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
       },
     }));
 
-    // Start blink cycle after hatching completes
     useEffect(() => {
       if (!isComplete || !buddy) return;
 
       const eyePixels = findEyePixels(buddy);
       if (eyePixels.length === 0) return;
 
-      // The "closed eye" color — use palette index 0 (body color)
-      const bodyColor = buddy.palette[0];
-
       const startBlink = () => {
         setIsBlinking(true);
-        // Close eyes for 150ms
         const openTimeout = setTimeout(() => setIsBlinking(false), 150);
         timeoutRefs.current.push(openTimeout);
       };
 
-      // Blink every 2.5-4.5 seconds (randomized)
       const scheduleBlink = () => {
         const delay = 2500 + Math.random() * 2000;
         blinkIntervalRef.current = setTimeout(() => {
@@ -120,7 +141,6 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
         }, delay) as unknown as ReturnType<typeof setInterval>;
       };
 
-      // First blink after 1-2s
       const initialDelay = setTimeout(() => {
         startBlink();
         scheduleBlink();
@@ -175,8 +195,25 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
         isDrawing: true, isComplete: false,
       });
 
+      // Initialize audio context for pop sounds
+      try {
+        if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
+          audioCtxRef.current = new AudioContext();
+        }
+        if (audioCtxRef.current.state === "suspended") {
+          audioCtxRef.current.resume();
+        }
+      } catch {
+        // Audio not available — proceed silently
+      }
+
       queue.forEach((pixel, index) => {
         const timeout = setTimeout(() => {
+          // Play pop sound
+          if (audioCtxRef.current && audioCtxRef.current.state === "running") {
+            createPopSound(audioCtxRef.current, index, totalPixels);
+          }
+
           setPixels((prev) => {
             const next = prev.map((row) => [...row]);
             next[pixel.y][pixel.x] = { color: pixel.color, visible: true };
@@ -220,12 +257,11 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
       return cleanup;
     }, [buddy, cleanup, onDrawingStateChange]);
 
-    // Determine pixel color — swap eye pixels to body color when blinking
     const getPixelColor = useCallback(
       (x: number, y: number, baseColor: string): string => {
         if (!isBlinking || !buddy) return baseColor;
         if (buddy.sprite[y]?.[x] === EYE_PALETTE_INDEX) {
-          return buddy.palette[0]; // body color = eyes closed
+          return buddy.palette[0];
         }
         return baseColor;
       },
@@ -240,12 +276,11 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
             ? {
                 backgroundSize: `${cellSize}px ${cellSize}px`,
                 backgroundImage:
-                  "linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px)",
+                  "linear-gradient(to right, rgba(245,240,235,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(245,240,235,0.04) 1px, transparent 1px)",
               }
             : undefined
         }
       >
-        {/* Centered sprite area with idle bob */}
         <motion.div
           className="absolute"
           style={{
@@ -267,7 +302,6 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
               : undefined
           }
         >
-          {/* Shiny golden border */}
           <div
             className={`relative w-full h-full ${
               isComplete && buddy?.isShiny
@@ -275,7 +309,6 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
                 : ""
             }`}
           >
-            {/* Pixels */}
             <AnimatePresence>
               {pixels.map((row, y) =>
                 row.map((pixel, x) => {
@@ -306,7 +339,6 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
               )}
             </AnimatePresence>
 
-            {/* Flash effect on completion */}
             {showFlash && (
               <motion.div
                 className="absolute inset-0 bg-white pointer-events-none"
@@ -316,7 +348,6 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
               />
             )}
 
-            {/* Shiny sparkles */}
             <AnimatePresence>
               {sparkles.map((sparkle) => (
                 <motion.div

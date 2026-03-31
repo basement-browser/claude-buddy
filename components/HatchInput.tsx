@@ -24,21 +24,23 @@ export default function HatchInput({ onHatch, initialName, isDrawing }: HatchInp
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2 px-4 py-3 border-b border-[#333] bg-[#1a1a1a]">
-      <span className="text-[10px] font-mono text-[#555]">&gt;</span>
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="enter your name to hatch a buddy..."
-        disabled={isDrawing}
-        className="flex-1 bg-transparent text-[#ddd] text-sm font-mono outline-none placeholder-[#444] caret-[#888] disabled:opacity-50"
-        autoFocus
-      />
+    <form onSubmit={handleSubmit} className="flex items-center gap-3">
+      <div className="flex-1 flex items-center gap-2 te-inset px-3 py-2.5">
+        <span className="text-[11px] font-mono text-[#E8734A] font-bold">&gt;</span>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="enter your name to hatch a buddy..."
+          disabled={isDrawing}
+          className="flex-1 bg-transparent text-[#F5F0EB] text-sm font-mono outline-none placeholder-[#5A5550] caret-[#E8734A] disabled:opacity-50"
+          autoFocus
+        />
+      </div>
       <button
         type="submit"
         disabled={!name.trim() || isDrawing}
-        className="px-4 py-1 text-[10px] font-mono uppercase tracking-wider border border-[#555] text-[#aaa] hover:bg-[#444] hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+        className="te-button accent"
       >
         Hatch
       </button>

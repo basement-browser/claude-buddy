@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Press_Start_2P, JetBrains_Mono } from "next/font/google";
+import { Press_Start_2P, JetBrains_Mono, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
@@ -12,6 +12,11 @@ const pressStart = Press_Start_2P({
 const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://claudebuddy.me";
@@ -101,16 +106,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${pressStart.variable} ${jetbrains.variable}`}>
-      <body className="bg-[#1a1a1a] text-white font-mono min-h-screen overflow-hidden">
+    <html lang="en" className={`${pressStart.variable} ${jetbrains.variable} ${inter.variable}`}>
+      <body className="min-h-screen overflow-x-hidden">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {children}
         <Analytics />
-        {/* CRT scanline overlay */}
-        <div className="crt-overlay" />
       </body>
     </html>
   );
