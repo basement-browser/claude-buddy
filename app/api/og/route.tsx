@@ -6,8 +6,15 @@ export const runtime = "edge";
 
 const SIZE = { width: 1200, height: 630 };
 const GRID = 16;
-const PIXEL = 20;
-const SPRITE_SIZE = GRID * PIXEL; // 320px
+const PIXEL = 24;
+const SPRITE_SIZE = GRID * PIXEL; // 384px
+
+const STAT_COLORS: Record<string, string> = {
+  VIBE: "#4ade80",
+  CHAOS: "#f87171",
+  FOCUS: "#60a5fa",
+  LUCK: "#fbbf24",
+};
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -20,7 +27,6 @@ export async function GET(request: Request) {
   const buddy = generateBuddy(name);
   const rarityColor = RARITY_COLORS[buddy.rarity];
 
-  // Build pixel array for the sprite
   const pixels: { x: number; y: number; color: string }[] = [];
   for (let row = 0; row < GRID; row++) {
     for (let col = 0; col < GRID; col++) {
@@ -35,12 +41,11 @@ export async function GET(request: Request) {
     }
   }
 
-  // Stat bars data
   const stats = [
-    { label: "VIB", value: buddy.stats.vibe },
-    { label: "CHS", value: buddy.stats.chaos },
-    { label: "FCS", value: buddy.stats.focus },
-    { label: "LCK", value: buddy.stats.luck },
+    { label: "VIBE", value: buddy.stats.vibe },
+    { label: "CHAOS", value: buddy.stats.chaos },
+    { label: "FOCUS", value: buddy.stats.focus },
+    { label: "LUCK", value: buddy.stats.luck },
   ];
 
   return new ImageResponse(
@@ -51,49 +56,37 @@ export async function GET(request: Request) {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          background: "#1C1917",
+          background: "#2A2520",
           fontFamily: "monospace",
           position: "relative",
           overflow: "hidden",
+          border: "3px solid #3A3530",
         }}
       >
-        {/* Scanline effect */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background:
-              "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px)",
-            display: "flex",
-          }}
-        />
-
         {/* Top bar */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "16px 32px",
+            padding: "14px 28px",
             borderBottom: "1px solid #3A3530",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div
               style={{
-                width: 10,
-                height: 10,
+                width: 8,
+                height: 8,
                 borderRadius: "50%",
-                background: "#f97316",
+                background: "#E8734A",
+                boxShadow: "0 0 6px rgba(232, 115, 74, 0.5)",
                 display: "flex",
               }}
             />
             <span
               style={{
-                fontSize: 16,
+                fontSize: 13,
                 fontWeight: 700,
                 letterSpacing: "0.15em",
                 color: "#F5F0EB",
@@ -104,7 +97,7 @@ export async function GET(request: Request) {
           </div>
           <span
             style={{
-              fontSize: 14,
+              fontSize: 11,
               letterSpacing: "0.1em",
               color: "#5A5550",
             }}
@@ -113,89 +106,89 @@ export async function GET(request: Request) {
           </span>
         </div>
 
-        {/* Main content */}
+        {/* Single CRT screen encompassing sprite + stats */}
         <div
           style={{
             flex: 1,
             display: "flex",
-            alignItems: "center",
-            padding: "0 48px",
-            gap: 48,
+            margin: 20,
+            background: "#0D0E0C",
+            borderRadius: 12,
+            border: "1px solid #1A1714",
+            overflow: "hidden",
+            boxShadow:
+              "inset 0 0 80px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.4)",
+            position: "relative",
           }}
         >
-          {/* Sprite area with CRT bezel */}
+          {/* Scanlines */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              opacity: 0.35,
+              background:
+                "repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.25) 2px, rgba(0,0,0,0.25) 4px)",
+              display: "flex",
+            }}
+          />
+
+          {/* Sprite — left side inside the screen */}
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
               alignItems: "center",
+              justifyContent: "center",
+              padding: "24px 32px",
             }}
           >
-            {/* CRT screen */}
             <div
               style={{
                 position: "relative",
-                width: SPRITE_SIZE + 40,
-                height: SPRITE_SIZE + 40,
-                background: "#0a0a0a",
-                border: "3px solid #2A2520",
-                borderRadius: 4,
+                width: SPRITE_SIZE,
+                height: SPRITE_SIZE,
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "inset 0 0 60px rgba(0,0,0,0.5)",
               }}
             >
               {/* Grid lines */}
               <div
                 style={{
                   position: "absolute",
-                  top: 20,
-                  left: 20,
+                  top: 0,
+                  left: 0,
                   width: SPRITE_SIZE,
                   height: SPRITE_SIZE,
-                  background:
-                    `repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent ${PIXEL}px), repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent ${PIXEL}px)`,
+                  background: `repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent ${PIXEL}px), repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent ${PIXEL}px)`,
                   display: "flex",
                 }}
               />
-
-              {/* Sprite pixels */}
-              <div
-                style={{
-                  position: "relative",
-                  width: SPRITE_SIZE,
-                  height: SPRITE_SIZE,
-                  display: "flex",
-                }}
-              >
-                {pixels.map((p, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      position: "absolute",
-                      left: p.x,
-                      top: p.y,
-                      width: PIXEL,
-                      height: PIXEL,
-                      background: p.color,
-                      display: "flex",
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* Shiny glow */}
+              {pixels.map((p, i) => (
+                <div
+                  key={i}
+                  style={{
+                    position: "absolute",
+                    left: p.x,
+                    top: p.y,
+                    width: PIXEL,
+                    height: PIXEL,
+                    background: p.color,
+                    display: "flex",
+                  }}
+                />
+              ))}
               {buddy.isShiny && (
                 <div
                   style={{
                     position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
+                    top: -4,
+                    left: -4,
+                    right: -4,
+                    bottom: -4,
                     border: "2px solid #f59e0b",
-                    borderRadius: 4,
+                    borderRadius: 0,
                     boxShadow: "inset 0 0 30px rgba(245,158,11,0.15)",
                     display: "flex",
                   }}
@@ -204,37 +197,39 @@ export async function GET(request: Request) {
             </div>
           </div>
 
-          {/* Info panel */}
+          {/* Info — right side inside the same screen */}
           <div
             style={{
               flex: 1,
               display: "flex",
               flexDirection: "column",
-              gap: 20,
+              justifyContent: "center",
+              padding: "24px 32px 24px 16px",
+              gap: 16,
             }}
           >
-            {/* Species name + rarity */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Species + rarity */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <span
                   style={{
-                    fontSize: 36,
+                    fontSize: 32,
                     fontWeight: 700,
                     color: "#F5F0EB",
                     letterSpacing: "-0.5px",
                   }}
                 >
-                  {buddy.isShiny ? `SHINY ${buddy.species}` : buddy.species}
+                  {buddy.isShiny ? `✨ ${buddy.species}` : buddy.species}
                 </span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span
                   style={{
-                    fontSize: 16,
+                    fontSize: 13,
                     fontWeight: 700,
                     color: rarityColor,
                     letterSpacing: "0.1em",
-                    padding: "4px 12px",
+                    padding: "3px 10px",
                     border: `1px solid ${rarityColor}`,
                     borderRadius: 2,
                   }}
@@ -244,11 +239,11 @@ export async function GET(request: Request) {
                 {buddy.isShiny && (
                   <span
                     style={{
-                      fontSize: 16,
+                      fontSize: 13,
                       fontWeight: 700,
                       color: "#f59e0b",
                       letterSpacing: "0.1em",
-                      padding: "4px 12px",
+                      padding: "3px 10px",
                       border: "1px solid #f59e0b",
                       borderRadius: 2,
                     }}
@@ -259,20 +254,7 @@ export async function GET(request: Request) {
               </div>
             </div>
 
-            {/* Soul description */}
-            <div
-              style={{
-                fontSize: 18,
-                color: "#9ca3af",
-                lineHeight: 1.5,
-                fontStyle: "italic",
-                display: "flex",
-              }}
-            >
-              &ldquo;{buddy.soulDescription}&rdquo;
-            </div>
-
-            {/* Stats */}
+            {/* Stats with per-stat colors */}
             <div
               style={{
                 display: "flex",
@@ -286,14 +268,14 @@ export async function GET(request: Request) {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 12,
+                    gap: 10,
                   }}
                 >
                   <span
                     style={{
-                      fontSize: 14,
-                      color: "#5A5550",
-                      width: 40,
+                      fontSize: 18,
+                      color: "#8A8480",
+                      width: 68,
                       letterSpacing: "0.05em",
                     }}
                   >
@@ -302,9 +284,10 @@ export async function GET(request: Request) {
                   <div
                     style={{
                       flex: 1,
-                      height: 16,
-                      background: "#2A2520",
+                      height: 22,
+                      background: "#1A1714",
                       borderRadius: 2,
+                      border: "1px solid #2A2520",
                       display: "flex",
                       overflow: "hidden",
                     }}
@@ -313,7 +296,7 @@ export async function GET(request: Request) {
                       style={{
                         width: `${stat.value}%`,
                         height: "100%",
-                        background: rarityColor,
+                        background: STAT_COLORS[stat.label],
                         borderRadius: 2,
                         display: "flex",
                       }}
@@ -321,9 +304,9 @@ export async function GET(request: Request) {
                   </div>
                   <span
                     style={{
-                      fontSize: 14,
-                      color: "#9ca3af",
-                      width: 30,
+                      fontSize: 18,
+                      color: "#F5F0EB",
+                      width: 36,
                       textAlign: "right",
                     }}
                   >
@@ -333,14 +316,27 @@ export async function GET(request: Request) {
               ))}
             </div>
 
-            {/* Palette */}
-            <div style={{ display: "flex", gap: 8 }}>
+            {/* Soul description */}
+            <div
+              style={{
+                fontSize: 15,
+                color: "#8A8480",
+                lineHeight: 1.5,
+                fontStyle: "italic",
+                display: "flex",
+              }}
+            >
+              &ldquo;{buddy.soulDescription}&rdquo;
+            </div>
+
+            {/* Palette swatches */}
+            <div style={{ display: "flex", gap: 6 }}>
               {buddy.palette.map((color, i) => (
                 <div
                   key={i}
                   style={{
-                    width: 28,
-                    height: 28,
+                    width: 24,
+                    height: 24,
                     background: color,
                     borderRadius: 2,
                     border: "1px solid #3A3530",
@@ -352,24 +348,40 @@ export async function GET(request: Request) {
           </div>
         </div>
 
-        {/* Bottom bar */}
+        {/* Footer */}
         <div
           style={{
+            position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "12px 32px",
+            padding: "12px 28px",
             borderTop: "1px solid #3A3530",
           }}
         >
-          <span style={{ fontSize: 13, color: "#5A5550" }}>
+          <span style={{ fontSize: 17, color: "#5A5550" }}>
             claudebuddy.me
           </span>
           <span
             style={{
-              fontSize: 13,
-              color: rarityColor,
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              transform: "translate(-50%, -50%)",
+              fontSize: 16,
+              color: "#5A5550",
+              letterSpacing: "0.04em",
+              whiteSpace: "nowrap",
+            }}
+          >
+            by basementbrowser.com
+          </span>
+          <span
+            style={{
+              fontSize: 17,
+              color: "#E8734A",
               letterSpacing: "0.05em",
+              textAlign: "right",
             }}
           >
             BUDDY HATCHED — {buddy.species.toUpperCase()}
