@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Press_Start_2P, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const pressStart = Press_Start_2P({
@@ -107,6 +108,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {children}
+        <Analytics />
         {/* CRT scanline overlay */}
         <div className="crt-overlay" />
       </body>
