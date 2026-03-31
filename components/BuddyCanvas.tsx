@@ -33,6 +33,33 @@ interface BuddyCanvasProps {
   cellSize: number;
 }
 
+// Synthesize a subtle pop sound using Web Audio API
+function createPopSound(audioCtx: AudioContext, index: number, total: number) {
+  const t = audioCtx.currentTime;
+
+  // Oscillator: short sine burst with pitch variation
+  const osc = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+
+  // Pitch rises slightly through the sequence for a satisfying build
+  const baseFreq = 600 + (index / total) * 400;
+  const variation = (Math.random() - 0.5) * 120;
+  osc.frequency.setValueAtTime(baseFreq + variation, t);
+  osc.frequency.exponentialRampToValueAtTime(200 + variation, t + 0.08);
+  osc.type = "sine";
+
+  // Quick attack, fast decay — percussive pop envelope
+  gainNode.gain.setValueAtTime(0, t);
+  gainNode.gain.linearRampToValueAtTime(0.08, t + 0.005);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+
+  osc.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+
+  osc.start(t);
+  osc.stop(t + 0.07);
+}
+
 function findEyePixels(buddy: Buddy): { x: number; y: number }[] {
   const eyes: { x: number; y: number }[] = [];
   for (let y = 0; y < GRID_SIZE; y++) {
@@ -57,6 +84,7 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
     const animationRef = useRef<number | null>(null);
     const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
     const blinkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const audioCtxRef = useRef<AudioContext | null>(null);
 
     const cleanup = useCallback(() => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
@@ -167,8 +195,25 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
         isDrawing: true, isComplete: false,
       });
 
+      // Initialize audio context for pop sounds
+      try {
+        if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
+          audioCtxRef.current = new AudioContext();
+        }
+        if (audioCtxRef.current.state === "suspended") {
+          audioCtxRef.current.resume();
+        }
+      } catch {
+        // Audio not available — proceed silently
+      }
+
       queue.forEach((pixel, index) => {
         const timeout = setTimeout(() => {
+          // Play pop sound
+          if (audioCtxRef.current && audioCtxRef.current.state === "running") {
+            createPopSound(audioCtxRef.current, index, totalPixels);
+          }
+
           setPixels((prev) => {
             const next = prev.map((row) => [...row]);
             next[pixel.y][pixel.x] = { color: pixel.color, visible: true };
