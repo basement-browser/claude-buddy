@@ -136,6 +136,7 @@ function ClaudeBuddyInner() {
           palette={buddy?.palette || ["#333", "#444", "#555", "#666"]}
           buddy={buddy}
           isComplete={drawingState.isComplete}
+          onSave={handleExport}
         />
       </div>
 

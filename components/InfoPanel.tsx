@@ -11,9 +11,10 @@ interface InfoPanelProps {
   palette: string[];
   buddy: Buddy | null;
   isComplete: boolean;
+  onSave: () => void;
 }
 
-export default function InfoPanel({ currentColor, palette, buddy, isComplete }: InfoPanelProps) {
+export default function InfoPanel({ currentColor, palette, buddy, isComplete, onSave }: InfoPanelProps) {
   return (
     <div className="flex flex-col gap-3 p-3 border-l border-[#333] bg-[#1a1a1a] w-[140px]">
       {/* Color section */}
@@ -96,9 +97,9 @@ export default function InfoPanel({ currentColor, palette, buddy, isComplete }: 
               </p>
             </div>
 
-            {/* Share */}
+            {/* Save & Share */}
             <div className="border-t border-[#333] pt-2">
-              <ShareButton buddy={buddy} />
+              <ShareButton buddy={buddy} onSave={onSave} />
             </div>
           </motion.div>
         )}
