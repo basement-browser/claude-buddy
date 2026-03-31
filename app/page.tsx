@@ -98,13 +98,13 @@ function ClaudeBuddyInner() {
   }, [initialName, handleHatch]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 md:p-8">
-      <div className="device-shell w-full max-w-[900px]">
+    <div className="flex items-center justify-center min-h-screen p-3 md:p-6 lg:p-8">
+      <div className="device-shell w-full max-w-[1200px]">
         {/* ── Device Header ── */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[#3A3530]">
+        <div className="flex items-center justify-between px-4 lg:px-5 py-3 border-b border-[#3A3530]">
           <div className="flex items-center gap-3">
             <div className="te-led" />
-            <h1 className="font-mono text-[11px] font-bold tracking-[0.15em] uppercase text-[#F5F0EB]">
+            <h1 className="font-mono text-[10px] lg:text-[11px] font-bold tracking-[0.15em] uppercase text-[#F5F0EB]">
               Claude Buddy Hatchery
             </h1>
           </div>
@@ -113,67 +113,66 @@ function ClaudeBuddyInner() {
           </div>
         </div>
 
-        {/* ── CRT Screen Section ── */}
-        <div className="p-4 md:p-5">
-          <div className="crt-bezel">
-            <div className="crt-screen" style={{ aspectRatio: "16 / 11" }}>
-              <div ref={containerRef} className="w-full h-full relative">
-                <BuddyCanvas
-                  ref={canvasRef}
-                  buddy={buddy}
-                  showGrid={showGrid}
-                  onDrawingStateChange={handleDrawingStateChange}
-                  cellSize={cellSize}
-                />
-                {/* Status overlay at bottom of screen */}
-                <div className="absolute bottom-0 left-0 right-0 z-20">
-                  <StatusBar
-                    x={drawingState.x}
-                    y={drawingState.y}
-                    currentColor={drawingState.currentColor}
-                    pixelCount={drawingState.pixelCount}
-                    totalPixels={drawingState.totalPixels}
-                    isComplete={drawingState.isComplete}
-                    speciesName={buddy?.species || null}
-                    isDrawing={drawingState.isDrawing}
+        {/* ── Main Body: Horizontal on desktop, vertical on mobile ── */}
+        <div className="flex flex-col lg:flex-row">
+
+          {/* ── Left: CRT Screen ── */}
+          <div className="flex-1 min-w-0 p-3 md:p-4 lg:p-5">
+            <div className="crt-bezel">
+              <div className="crt-screen" style={{ aspectRatio: "1 / 1" }}>
+                <div ref={containerRef} className="w-full h-full relative">
+                  <BuddyCanvas
+                    ref={canvasRef}
+                    buddy={buddy}
+                    showGrid={showGrid}
+                    onDrawingStateChange={handleDrawingStateChange}
+                    cellSize={cellSize}
                   />
+                  {/* Status overlay at bottom of screen */}
+                  <div className="absolute bottom-0 left-0 right-0 z-20">
+                    <StatusBar
+                      x={drawingState.x}
+                      y={drawingState.y}
+                      currentColor={drawingState.currentColor}
+                      pixelCount={drawingState.pixelCount}
+                      totalPixels={drawingState.totalPixels}
+                      isComplete={drawingState.isComplete}
+                      speciesName={buddy?.species || null}
+                      isDrawing={drawingState.isDrawing}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* ── Control Panel ── */}
-        <div className="px-4 md:px-5 pb-4">
-          {/* Input row */}
-          <HatchInput
-            onHatch={handleHatch}
-            initialName={initialName}
-            isDrawing={drawingState.isDrawing}
-          />
+          {/* ── Right: Control Panel (scrollable on desktop) ── */}
+          <div className="lg:w-[320px] xl:w-[360px] lg:border-l border-t lg:border-t-0 border-[#3A3530] lg:overflow-y-auto lg:max-h-[calc(100vh-140px)]">
+            <div className="flex flex-col gap-4 p-3 md:p-4 lg:p-5">
 
-          {/* Control buttons + Info */}
-          <div className="flex flex-col md:flex-row gap-4 mt-4">
-            {/* Left: Readout panel */}
-            <div className="flex-1 min-w-0">
-              <InfoPanel
-                currentColor={drawingState.currentColor}
-                palette={buddy?.palette || ["#333", "#444", "#555", "#666"]}
-                buddy={buddy}
-                isComplete={drawingState.isComplete}
-                onSave={handleExport}
+              {/* Input */}
+              <HatchInput
+                onHatch={handleHatch}
+                initialName={initialName}
+                isDrawing={drawingState.isDrawing}
               />
-            </div>
 
-            {/* Right: Controls + actions */}
-            <div className="flex flex-col gap-3 md:w-[280px]">
-              {/* Tool buttons row */}
+              {/* Control buttons */}
               <ToolPanel
                 isDrawing={drawingState.isDrawing}
                 showGrid={showGrid}
                 onToggleGrid={() => setShowGrid((g) => !g)}
                 onClear={handleClear}
                 onExport={handleExport}
+              />
+
+              {/* Readout panel */}
+              <InfoPanel
+                currentColor={drawingState.currentColor}
+                palette={buddy?.palette || ["#333", "#444", "#555", "#666"]}
+                buddy={buddy}
+                isComplete={drawingState.isComplete}
+                onSave={handleExport}
               />
 
               {/* Sync section */}
@@ -192,7 +191,7 @@ function ClaudeBuddyInner() {
 
         {/* ── Footer ── */}
         <div className="te-groove" />
-        <div className="flex items-center justify-between px-5 py-3">
+        <div className="flex items-center justify-between px-4 lg:px-5 py-3">
           <a
             href="https://basementbrowser.com"
             target="_blank"
