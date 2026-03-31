@@ -11,6 +11,7 @@ import InfoPanel from "@/components/InfoPanel";
 import StatusBar from "@/components/StatusBar";
 import HatchInput from "@/components/HatchInput";
 import SyncSection from "@/components/SyncSection";
+import DonateModal from "@/components/DonateModal";
 
 interface DrawingState {
   x: number | null;
@@ -26,6 +27,7 @@ function ClaudeBuddyInner() {
   const searchParams = useSearchParams();
   const [buddy, setBuddy] = useState<Buddy | null>(null);
   const [showGrid, setShowGrid] = useState(true);
+  const [showDonate, setShowDonate] = useState(false);
   const [drawingState, setDrawingState] = useState<DrawingState>({
     x: null,
     y: null,
@@ -164,15 +166,15 @@ function ClaudeBuddyInner() {
           />
           <span>Built by the Basement Team</span>
         </a>
-        <a
-          href="https://checkout.square.site/merchant/MLKE2E5BR2ZSF/checkout/UKO46NY4ZZ7HXZL5VWGYNF7J"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => setShowDonate(true)}
           className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider border border-[#444] text-[#888] hover:bg-[#444] hover:text-white transition-colors"
         >
           Buy us a coffee
-        </a>
+        </button>
       </div>
+
+      <DonateModal isOpen={showDonate} onClose={() => setShowDonate(false)} />
     </div>
   );
 }

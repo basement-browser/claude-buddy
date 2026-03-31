@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Buddy } from "@/lib/types";
 
 const GRID_SIZE = 16;
+const EYE_PALETTE_INDEX = 3;
 
 interface PixelState {
   color: string;
@@ -32,24 +33,40 @@ interface BuddyCanvasProps {
   cellSize: number;
 }
 
+// Find eye pixel coordinates for a buddy (palette index 3 pixels)
+function findEyePixels(buddy: Buddy): { x: number; y: number }[] {
+  const eyes: { x: number; y: number }[] = [];
+  for (let y = 0; y < GRID_SIZE; y++) {
+    for (let x = 0; x < GRID_SIZE; x++) {
+      if (buddy.sprite[y]?.[x] === EYE_PALETTE_INDEX) {
+        eyes.push({ x, y });
+      }
+    }
+  }
+  return eyes;
+}
+
 const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
   function BuddyCanvas({ buddy, showGrid, onDrawingStateChange, cellSize }, ref) {
     const [pixels, setPixels] = useState<(PixelState | null)[][]>(
       () => Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null))
     );
-    const [revealedPixels, setRevealedPixels] = useState<Set<string>>(new Set());
     const [isComplete, setIsComplete] = useState(false);
     const [showFlash, setShowFlash] = useState(false);
+    const [isBlinking, setIsBlinking] = useState(false);
     const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number }[]>([]);
     const animationRef = useRef<number | null>(null);
     const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const blinkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // Clean up on unmount or buddy change
     const cleanup = useCallback(() => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       timeoutRefs.current.forEach(clearTimeout);
       timeoutRefs.current = [];
+      if (blinkIntervalRef.current) {
+        clearInterval(blinkIntervalRef.current);
+        blinkIntervalRef.current = null;
+      }
     }, []);
 
     useImperativeHandle(ref, () => ({
@@ -60,10 +77,7 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
         canvas.width = GRID_SIZE * scale;
         canvas.height = GRID_SIZE * scale;
         const ctx = canvas.getContext("2d")!;
-
-        // Draw transparent background
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         for (let y = 0; y < GRID_SIZE; y++) {
           for (let x = 0; x < GRID_SIZE; x++) {
             const paletteIdx = buddy.sprite[y]?.[x];
@@ -73,7 +87,6 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
             }
           }
         }
-
         const link = document.createElement("a");
         link.download = `${buddy.species.toLowerCase()}-buddy.png`;
         link.href = canvas.toDataURL("image/png");
@@ -81,14 +94,55 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
       },
     }));
 
+    // Start blink cycle after hatching completes
+    useEffect(() => {
+      if (!isComplete || !buddy) return;
+
+      const eyePixels = findEyePixels(buddy);
+      if (eyePixels.length === 0) return;
+
+      // The "closed eye" color — use palette index 0 (body color)
+      const bodyColor = buddy.palette[0];
+
+      const startBlink = () => {
+        setIsBlinking(true);
+        // Close eyes for 150ms
+        const openTimeout = setTimeout(() => setIsBlinking(false), 150);
+        timeoutRefs.current.push(openTimeout);
+      };
+
+      // Blink every 2.5-4.5 seconds (randomized)
+      const scheduleBlink = () => {
+        const delay = 2500 + Math.random() * 2000;
+        blinkIntervalRef.current = setTimeout(() => {
+          startBlink();
+          scheduleBlink();
+        }, delay) as unknown as ReturnType<typeof setInterval>;
+      };
+
+      // First blink after 1-2s
+      const initialDelay = setTimeout(() => {
+        startBlink();
+        scheduleBlink();
+      }, 1000 + Math.random() * 1000);
+      timeoutRefs.current.push(initialDelay);
+
+      return () => {
+        if (blinkIntervalRef.current) {
+          clearTimeout(blinkIntervalRef.current as unknown as ReturnType<typeof setTimeout>);
+          blinkIntervalRef.current = null;
+        }
+      };
+    }, [isComplete, buddy]);
+
     useEffect(() => {
       cleanup();
 
       if (!buddy) {
         setPixels(Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null)));
-        setRevealedPixels(new Set());
         setIsComplete(false);
         setShowFlash(false);
+        setIsBlinking(false);
         setSparkles([]);
         onDrawingStateChange({
           x: null, y: null, currentColor: null,
@@ -98,7 +152,6 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
         return;
       }
 
-      // Build pixel queue (scanline order, skip transparent)
       const queue: { x: number; y: number; color: string }[] = [];
       for (let y = 0; y < GRID_SIZE; y++) {
         for (let x = 0; x < GRID_SIZE; x++) {
@@ -110,12 +163,10 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
       }
 
       const totalPixels = queue.length;
-
-      // Reset state
       setPixels(Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null)));
-      setRevealedPixels(new Set());
       setIsComplete(false);
       setShowFlash(false);
+      setIsBlinking(false);
       setSparkles([]);
 
       onDrawingStateChange({
@@ -124,7 +175,6 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
         isDrawing: true, isComplete: false,
       });
 
-      // Animate pixels one by one
       queue.forEach((pixel, index) => {
         const timeout = setTimeout(() => {
           setPixels((prev) => {
@@ -132,26 +182,20 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
             next[pixel.y][pixel.x] = { color: pixel.color, visible: true };
             return next;
           });
-          setRevealedPixels((prev) => new Set(prev).add(`${pixel.x},${pixel.y}`));
 
           onDrawingStateChange({
-            x: pixel.x,
-            y: pixel.y,
-            currentColor: pixel.color,
-            pixelCount: index + 1,
-            totalPixels,
+            x: pixel.x, y: pixel.y, currentColor: pixel.color,
+            pixelCount: index + 1, totalPixels,
             isDrawing: index < totalPixels - 1,
             isComplete: index === totalPixels - 1,
           });
 
-          // On last pixel
           if (index === totalPixels - 1) {
             const flashTimeout = setTimeout(() => {
               setShowFlash(true);
               setIsComplete(true);
               setTimeout(() => setShowFlash(false), 300);
 
-              // Shiny sparkles
               if (buddy.isShiny) {
                 const sparkleInterval = setInterval(() => {
                   setSparkles((prev) => {
@@ -169,13 +213,24 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
             }, 100);
             timeoutRefs.current.push(flashTimeout);
           }
-        }, 40 * index + 200); // 40ms stagger, 200ms initial delay
-
+        }, 40 * index + 200);
         timeoutRefs.current.push(timeout);
       });
 
       return cleanup;
     }, [buddy, cleanup, onDrawingStateChange]);
+
+    // Determine pixel color — swap eye pixels to body color when blinking
+    const getPixelColor = useCallback(
+      (x: number, y: number, baseColor: string): string => {
+        if (!isBlinking || !buddy) return baseColor;
+        if (buddy.sprite[y]?.[x] === EYE_PALETTE_INDEX) {
+          return buddy.palette[0]; // body color = eyes closed
+        }
+        return baseColor;
+      },
+      [isBlinking, buddy]
+    );
 
     return (
       <div
@@ -190,16 +245,27 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
             : undefined
         }
       >
-        {/* Centered sprite area */}
-        <div
+        {/* Centered sprite area with idle bob */}
+        <motion.div
           className="absolute"
           style={{
             width: GRID_SIZE * cellSize,
             height: GRID_SIZE * cellSize,
             left: "50%",
             top: "50%",
-            transform: "translate(-50%, -50%)",
+            x: "-50%",
+            y: "-50%",
           }}
+          animate={
+            isComplete
+              ? { y: ["-50%", "-51.5%", "-50%"] }
+              : { y: "-50%" }
+          }
+          transition={
+            isComplete
+              ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
+              : undefined
+          }
         >
           {/* Shiny golden border */}
           <div
@@ -209,12 +275,12 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
                 : ""
             }`}
           >
-
             {/* Pixels */}
             <AnimatePresence>
               {pixels.map((row, y) =>
                 row.map((pixel, x) => {
                   if (!pixel || !pixel.visible) return null;
+                  const color = getPixelColor(x, y, pixel.color);
                   return (
                     <motion.div
                       key={`${x}-${y}`}
@@ -224,7 +290,7 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
                         top: y * cellSize + (showGrid ? 1 : 0),
                         width: cellSize - (showGrid ? 1 : 0),
                         height: cellSize - (showGrid ? 1 : 0),
-                        backgroundColor: pixel.color,
+                        backgroundColor: color,
                       }}
                       initial={{ scale: 0, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
@@ -267,7 +333,7 @@ const BuddyCanvas = forwardRef<BuddyCanvasHandle, BuddyCanvasProps>(
               ))}
             </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
