@@ -5,12 +5,13 @@ import { useState } from "react";
 interface SyncSectionProps {
   onHatch: (userId: string) => void;
   isDrawing: boolean;
+  expanded: boolean;
+  onToggle: (open: boolean) => void;
 }
 
 const COMMAND = `node -e "console.log(JSON.parse(require('fs').readFileSync(require('os').homedir()+'/.claude.json','utf8')).userID)"`;
 
-export default function SyncSection({ onHatch, isDrawing }: SyncSectionProps) {
-  const [expanded, setExpanded] = useState(false);
+export default function SyncSection({ onHatch, isDrawing, expanded, onToggle }: SyncSectionProps) {
   const [userId, setUserId] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -41,7 +42,7 @@ export default function SyncSection({ onHatch, isDrawing }: SyncSectionProps) {
   if (!expanded) {
     return (
       <button
-        onClick={() => setExpanded(true)}
+        onClick={() => onToggle(true)}
         className="te-button text-[9px] w-full"
       >
         Use Claude Code ID
@@ -54,7 +55,7 @@ export default function SyncSection({ onHatch, isDrawing }: SyncSectionProps) {
       <div className="flex items-center justify-between mb-2">
         <span className="te-label">Hatch from Claude Code ID</span>
         <button
-          onClick={() => setExpanded(false)}
+          onClick={() => onToggle(false)}
           className="text-[9px] font-mono text-[#5A5550] hover:text-[#8A8480] transition-colors"
         >
           [close]

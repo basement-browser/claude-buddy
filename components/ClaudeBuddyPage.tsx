@@ -38,6 +38,7 @@ function ClaudeBuddyInner() {
     isDrawing: false,
     isComplete: false,
   });
+  const [expandedPanel, setExpandedPanel] = useState<"sync" | "install" | null>(null);
   const canvasRef = useRef<BuddyCanvasHandle>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [cellSize, setCellSize] = useState(28);
@@ -180,11 +181,17 @@ function ClaudeBuddyInner() {
               <SyncSection
                 onHatch={handleHatch}
                 isDrawing={drawingState.isDrawing}
+                expanded={expandedPanel === "sync"}
+                onToggle={(open) => setExpandedPanel(open ? "sync" : null)}
               />
 
               {/* Install as Claude Code buddy */}
               {drawingState.isComplete && buddy && (
-                <InstallBuddy buddy={buddy} />
+                <InstallBuddy
+                  buddy={buddy}
+                  expanded={expandedPanel === "install"}
+                  onToggle={(open) => setExpandedPanel(open ? "install" : null)}
+                />
               )}
 
               {/* Share buttons */}

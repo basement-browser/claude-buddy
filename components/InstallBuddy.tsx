@@ -5,6 +5,8 @@ import { Buddy } from "@/lib/types";
 
 interface InstallBuddyProps {
   buddy: Buddy;
+  expanded: boolean;
+  onToggle: (open: boolean) => void;
 }
 
 function getInstallCommand(buddy: Buddy): string {
@@ -14,8 +16,7 @@ function getInstallCommand(buddy: Buddy): string {
 
 const UNINSTALL_CMD = "curl -fsSL https://claudebuddy.me/uninstall | node";
 
-export default function InstallBuddy({ buddy }: InstallBuddyProps) {
-  const [expanded, setExpanded] = useState(false);
+export default function InstallBuddy({ buddy, expanded, onToggle }: InstallBuddyProps) {
   const [copied, setCopied] = useState<"install" | "uninstall" | false>(false);
 
   const installCmd = useMemo(() => getInstallCommand(buddy), [buddy]);
@@ -38,7 +39,7 @@ export default function InstallBuddy({ buddy }: InstallBuddyProps) {
   if (!expanded) {
     return (
       <button
-        onClick={() => setExpanded(true)}
+        onClick={() => onToggle(true)}
         className="te-button accent text-[9px] w-full"
       >
         Set as Claude Code Buddy
@@ -51,7 +52,7 @@ export default function InstallBuddy({ buddy }: InstallBuddyProps) {
       <div className="flex items-center justify-between mb-2">
         <span className="te-label">Install as Claude Code Buddy</span>
         <button
-          onClick={() => setExpanded(false)}
+          onClick={() => onToggle(false)}
           className="text-[9px] font-mono text-[#5A5550] hover:text-[#8A8480] transition-colors"
         >
           [close]
