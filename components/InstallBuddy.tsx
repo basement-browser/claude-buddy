@@ -7,71 +7,31 @@ interface InstallBuddyProps {
   buddy: Buddy;
 }
 
-/**
- * Encode a 16x16 sprite grid into a compact string.
- * Each pixel becomes one char: '0'-'3' for palette indices, '.' for transparent.
- * 256 chars total for the full grid.
- */
-function encodeSprite(sprite: (number | null)[][]): string {
-  let out = "";
-  for (let y = 0; y < 16; y++) {
-    for (let x = 0; x < 16; x++) {
-      const v = sprite[y]?.[x];
-      out += v === null || v === undefined ? "." : String(v);
-    }
-  }
-  return out;
+function getInstallCommand(buddy: Buddy): string {
+  const name = encodeURIComponent(buddy.name);
+  return `curl -fsSL https://claudebuddy.me/install/${name} | node`;
 }
 
-function generateInstallCommand(buddy: Buddy): string {
-  const encoded = encodeSprite(buddy.sprite);
-  const palette = JSON.stringify(buddy.palette);
-  const data = {
-    species: buddy.species,
-    rarity: buddy.rarity,
-    isShiny: buddy.isShiny,
-    palette: "__PALETTE__",
-    sprite: "__SPRITE__",
-    stats: buddy.stats,
-    soul: buddy.soulDescription,
-    name: buddy.name,
-    installedAt: "__DATE__",
-  };
-
-  // Build a node one-liner that decodes the sprite and writes the file
-  const jsonStr = JSON.stringify(data);
-  const script = [
-    `const fs=require('fs'),os=require('os'),p=require('path');`,
-    `const s='${encoded}';`,
-    `const grid=[];for(let y=0;y<16;y++){const r=[];for(let x=0;x<16;x++){const c=s[y*16+x];r.push(c==='.'?null:+c)}grid.push(r)}`,
-    `const d=${jsonStr.replace('"__PALETTE__"', palette).replace('"__SPRITE__"', 'grid').replace('"__DATE__"', 'new Date().toISOString()')};`,
-    `const dir=p.join(os.homedir(),'.claude');`,
-    `try{fs.mkdirSync(dir,{recursive:true})}catch{}`,
-    `fs.writeFileSync(p.join(dir,'buddy.json'),JSON.stringify(d,null,2));`,
-    `console.log('Buddy installed: '+d.species+' ('+d.rarity+')')`,
-  ].join("");
-
-  return `node -e "${script.replace(/"/g, '\\"')}"`;
-}
+const UNINSTALL_CMD = "curl -fsSL https://claudebuddy.me/uninstall | node";
 
 export default function InstallBuddy({ buddy }: InstallBuddyProps) {
   const [expanded, setExpanded] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"install" | "uninstall" | false>(false);
 
-  const command = useMemo(() => generateInstallCommand(buddy), [buddy]);
+  const installCmd = useMemo(() => getInstallCommand(buddy), [buddy]);
 
-  const handleCopy = async () => {
+  const handleCopy = async (text: string, which: "install" | "uninstall") => {
     try {
-      await navigator.clipboard.writeText(command);
+      await navigator.clipboard.writeText(text);
     } catch {
       const ta = document.createElement("textarea");
-      ta.value = command;
+      ta.value = text;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand("copy");
       document.body.removeChild(ta);
     }
-    setCopied(true);
+    setCopied(which);
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -99,24 +59,54 @@ export default function InstallBuddy({ buddy }: InstallBuddyProps) {
       </div>
 
       <div className="text-[9px] font-mono text-[#8A8480] mb-2 leading-relaxed">
-        Paste this in your terminal to set <span className="text-[#F5F0EB]">{buddy.species}</span> as
-        your Claude Code buddy character:
+        Paste this in your terminal to install{" "}
+        <span className="text-[#F5F0EB]">{buddy.species}</span> into Claude
+        Code:
       </div>
 
-      <div className="flex items-start gap-1">
+      <div className="flex items-start gap-1 mb-2">
         <code className="flex-1 text-[8px] font-mono text-[#8A8480] bg-[#0D0E0C] border border-[#2A2520] rounded px-2 py-1.5 overflow-x-auto whitespace-nowrap max-h-[60px] block">
-          {command}
+          {installCmd}
         </code>
         <button
-          onClick={handleCopy}
+          onClick={() => handleCopy(installCmd, "install")}
           className="te-button text-[8px] shrink-0"
         >
-          {copied ? "OK!" : "COPY"}
+          {copied === "install" ? "OK!" : "COPY"}
         </button>
       </div>
 
-      <div className="text-[8px] font-mono text-[#5A5550] mt-2 leading-relaxed">
-        Writes to <span className="text-[#8A8480]">~/.claude/buddy.json</span>
+      <div className="text-[8px] font-mono text-[#5A5550] leading-relaxed space-y-0.5">
+        <div>
+          <span className="text-[#8A8480]">{">"}</span> Saves buddy to{" "}
+          <span className="text-[#8A8480]">~/.claude/buddy.json</span>
+        </div>
+        <div>
+          <span className="text-[#8A8480]">{">"}</span> Adds pixel art renderer
+          at{" "}
+          <span className="text-[#8A8480]">~/.claude/buddy/render.cjs</span>
+        </div>
+        <div>
+          <span className="text-[#8A8480]">{">"}</span> Configures Claude Code
+          statusline
+        </div>
+      </div>
+
+      <div className="mt-3 pt-2 border-t border-[#2A2520]">
+        <div className="flex items-center justify-between">
+          <span className="text-[8px] font-mono text-[#5A5550]">
+            To uninstall:
+          </span>
+          <button
+            onClick={() => handleCopy(UNINSTALL_CMD, "uninstall")}
+            className="text-[8px] font-mono text-[#5A5550] hover:text-[#8A8480] transition-colors"
+          >
+            {copied === "uninstall" ? "[copied!]" : "[copy]"}
+          </button>
+        </div>
+        <code className="text-[7px] font-mono text-[#5A5550] block mt-0.5">
+          {UNINSTALL_CMD}
+        </code>
       </div>
     </div>
   );
