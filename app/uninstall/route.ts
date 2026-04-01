@@ -66,7 +66,27 @@ if (fs.existsSync(BUDDY_JSON)) {
   console.log(GREEN + '  \\u2713' + R + ' Removed ' + DIM + '~/.claude/buddy.json' + R);
 }
 
-// Remove buddy directory
+// Restore built-in Claude Code companion
+const CONFIG_JSON = p.join(CLAUDE_DIR, 'config.json');
+const CONFIG_BACKUP = p.join(BACKUP_DIR, 'config.json.backup');
+if (fs.existsSync(CONFIG_BACKUP)) {
+  try {
+    const backup = JSON.parse(fs.readFileSync(CONFIG_BACKUP, 'utf8'));
+    fs.writeFileSync(CONFIG_JSON, JSON.stringify(backup, null, 2));
+    console.log(GREEN + '  \\u2713' + R + ' Restored built-in Claude Code companion');
+  } catch {}
+} else if (fs.existsSync(CONFIG_JSON)) {
+  try {
+    const config = JSON.parse(fs.readFileSync(CONFIG_JSON, 'utf8'));
+    if (config.companionMuted) {
+      delete config.companionMuted;
+      fs.writeFileSync(CONFIG_JSON, JSON.stringify(config, null, 2));
+      console.log(GREEN + '  \\u2713' + R + ' Restored built-in Claude Code companion');
+    }
+  } catch {}
+}
+
+// Remove buddy directory (after reading backups from it)
 if (fs.existsSync(BUDDY_DIR)) {
   fs.rmSync(BUDDY_DIR, { recursive: true, force: true });
   console.log(GREEN + '  \\u2713' + R + ' Removed ' + DIM + '~/.claude/buddy/' + R);

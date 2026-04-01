@@ -318,6 +318,21 @@ settings.statusLine = {
 };
 fs.writeFileSync(SETTINGS_JSON, JSON.stringify(settings, null, 2));
 
+// Mute the built-in Claude Code companion so it doesn't overlap with ours
+const CONFIG_JSON = p.join(CLAUDE_DIR, 'config.json');
+try {
+  let config = {};
+  if (fs.existsSync(CONFIG_JSON)) {
+    config = JSON.parse(fs.readFileSync(CONFIG_JSON, 'utf8'));
+    // Back up original config
+    fs.writeFileSync(p.join(BACKUP_DIR, 'config.json.backup'), JSON.stringify(config, null, 2));
+  }
+  if (!config.companionMuted) {
+    config.companionMuted = true;
+    fs.writeFileSync(CONFIG_JSON, JSON.stringify(config, null, 2));
+  }
+} catch {}
+
 // ── Show buddy preview ──
 const palette = ${JSON.stringify(buddy.palette)};
 for (let y = 0; y < 16; y++) {
@@ -338,6 +353,7 @@ console.log(GREEN + '  \\u2713' + R + ' Buddy data saved to ' + DIM + '~/.claude
 console.log(GREEN + '  \\u2713' + R + ' Pixel art renderer at ' + DIM + '~/.claude/buddy/render.cjs' + R);
 console.log(GREEN + '  \\u2713' + R + ' Statusline configured ' + DIM + '(restart Claude Code to see it)' + R);
 console.log(GREEN + '  \\u2713' + R + ' Launch wrapper at ' + DIM + '~/.claude/buddy/claude' + R);
+console.log(GREEN + '  \\u2713' + R + ' Built-in Claude Code companion hidden');
 console.log('');
 
 // Auto-add shell alias
