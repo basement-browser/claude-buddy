@@ -145,6 +145,14 @@ export function generateInstallScript(buddy: Buddy, baseUrl: string): string {
 // Claude Buddy Installer - https://claudebuddy.me
 // Installs ${buddy.species} (${buddy.rarity}${buddy.isShiny ? " Shiny" : ""}) as your Claude Code buddy
 
+// Node.js version check
+const [major] = process.versions.node.split('.').map(Number);
+if (major < 16) {
+  console.error('\\x1b[31mClaude Buddy requires Node.js 16 or later (found ' + process.version + ').\\x1b[0m');
+  console.error('Install Node.js from https://nodejs.org or via your package manager.');
+  process.exit(1);
+}
+
 const fs = require('fs');
 const os = require('os');
 const p = require('path');
@@ -191,7 +199,7 @@ INPUT=$(cat)
 BUDDY_DIR="$HOME/.claude/buddy"
 BUDDY_JSON="$HOME/.claude/buddy.json"
 BUDDY_PART=""
-if [ -f "$BUDDY_JSON" ] && [ -f "$BUDDY_DIR/render.cjs" ]; then
+if [ -f "$BUDDY_JSON" ] && [ -f "$BUDDY_DIR/render.cjs" ] && command -v node >/dev/null 2>&1; then
   # Render single-line micro-sprite (half-block pixel art) + name with stars
   MICRO=$(node "$BUDDY_DIR/render.cjs" --micro --1 2>/dev/null)
   NAME=$(node "$BUDDY_DIR/render.cjs" --compact 2>/dev/null | tr -d '\\n')
@@ -227,7 +235,7 @@ const launchWrapper = \`#!/bin/bash
 # Usage: ~/.claude/buddy/claude [args...]
 
 BUDDY_DIR="$HOME/.claude/buddy"
-if [ -f "$BUDDY_DIR/render.cjs" ]; then
+if [ -f "$BUDDY_DIR/render.cjs" ] && command -v node >/dev/null 2>&1; then
   node "$BUDDY_DIR/render.cjs" --micro 2>/dev/null
   echo ""
 fi
