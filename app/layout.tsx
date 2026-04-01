@@ -78,6 +78,7 @@ export const metadata: Metadata = {
   category: "entertainment",
   verification: {
     google: "RfpiirFHc_b4mjKKh4Gs0aoaJ5xYjBnAwMAr6ZOkxOo",
+    other: { "msvalidate.01": "9F8B3E896C2C997A2752B220EAE9D53B" },
   },
 };
 
