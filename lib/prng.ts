@@ -1,20 +1,21 @@
+// Mulberry32 — matches Claude Code source exactly
 export function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
   return function () {
-    seed |= 0;
-    seed = (seed + 0x6d2b79f5) | 0;
-    var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
 
-export function hashString(str: string): number {
-  const salted = str.toLowerCase().trim() + "friend-2026-401";
-  let hash = 0;
-  for (let i = 0; i < salted.length; i++) {
-    const char = salted.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
+// FNV-1a hash — matches Claude Code source exactly
+export function hashString(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
   }
-  return hash;
+  return h >>> 0;
 }

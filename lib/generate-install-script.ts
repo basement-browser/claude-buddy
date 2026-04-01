@@ -1,4 +1,4 @@
-import { Buddy } from "./types";
+import { Buddy, RARITY_STARS, STAT_NAMES } from "./types";
 
 /** Encode a 16x16 sprite grid into a compact 256-char string */
 function encodeSprite(sprite: (number | null)[][]): string {
@@ -12,14 +12,6 @@ function encodeSprite(sprite: (number | null)[][]): string {
   return out;
 }
 
-const RARITY_STARS: Record<string, string> = {
-  Common: "\u2605",
-  Uncommon: "\u2605\u2605",
-  Rare: "\u2605\u2605\u2605",
-  Epic: "\u2605\u2605\u2605\u2605",
-  Legendary: "\u2605\u2605\u2605\u2605\u2605",
-};
-
 /**
  * The minimal pixel-art renderer script (~2KB).
  * Reads ~/.claude/buddy.json and renders the 16x16 sprite in terminal.
@@ -32,21 +24,17 @@ const b=JSON.parse(fs.readFileSync(f,'utf8'));
 const R='\\x1b[0m';
 const bg=(h)=>{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),bl=parseInt(h.slice(5,7),16);return\`\\x1b[48;2;\${r};\${g};\${bl}m\`};
 const fg=(h)=>{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),bl=parseInt(h.slice(5,7),16);return\`\\x1b[38;2;\${r};\${g};\${bl}m\`};
-const rc={'Common':'\\x1b[37m','Uncommon':'\\x1b[32m','Rare':'\\x1b[34m','Epic':'\\x1b[35m','Legendary':'\\x1b[33m'};
-const stars={'Common':'\\u2605','Uncommon':'\\u2605\\u2605','Rare':'\\u2605\\u2605\\u2605','Epic':'\\u2605\\u2605\\u2605\\u2605','Legendary':'\\u2605\\u2605\\u2605\\u2605\\u2605'};
+const rc={'common':'\\x1b[37m','uncommon':'\\x1b[32m','rare':'\\x1b[34m','epic':'\\x1b[35m','legendary':'\\x1b[33m'};
+const stars={'common':'\\u2605','uncommon':'\\u2605\\u2605','rare':'\\u2605\\u2605\\u2605','epic':'\\u2605\\u2605\\u2605\\u2605','legendary':'\\u2605\\u2605\\u2605\\u2605\\u2605'};
 const compact=process.argv.includes('--compact');
 const micro=process.argv.includes('--micro');
 if(micro){
-  // Render a compact half-block sprite (full 16x16 -> cols x 8 rows)
-  // \\u2580 = upper half block, \\u2584 = lower half block
-  // Find horizontal bounding box
   let minX=15,maxX=0;
   for(let y=0;y<16;y++)for(let x=0;x<16;x++){
     if(b.sprite[y]?.[x]!=null){if(x<minX)minX=x;if(x>maxX)maxX=x;}
   }
   const oneRow=process.argv.includes('--1');
   if(oneRow){
-    // Single-line mode: pick the row-pair with most pixels (the "face")
     let bestY=0,bestCount=0;
     for(let y=0;y<16;y+=2){
       let c=0;
@@ -64,7 +52,6 @@ if(micro){
     }
     process.stdout.write(out);
   } else {
-    // Full compact mode: all 8 row-pairs
     let out='';
     for(let y=0;y<16;y+=2){
       for(let x=minX;x<=maxX;x++){
@@ -101,9 +88,15 @@ for(let y=0;y<16;y++){
   console.log(l);
 }
 console.log('');
-const bar=(v,c)=>{const f=Math.round(v/99*10);return c+'\\u2588'.repeat(f)+R+'\\x1b[2m'+'\\u2591'.repeat(10-f)+R};
-console.log('  '+bar(b.stats.vibe,'\\x1b[32m')+' VIB '+bar(b.stats.chaos,'\\x1b[31m')+' CHA');
-console.log('  '+bar(b.stats.focus,'\\x1b[34m')+' FOC '+bar(b.stats.luck,'\\x1b[33m')+' LCK');
+const statNames=['DEBUGGING','PATIENCE','CHAOS','WISDOM','SNARK'];
+const statColors=['\\x1b[32m','\\x1b[34m','\\x1b[31m','\\x1b[35m','\\x1b[33m'];
+const bar=(v,c)=>{const f=Math.round(v/100*10);return c+'\\u2588'.repeat(f)+R+'\\x1b[2m'+'\\u2591'.repeat(10-f)+R};
+for(let i=0;i<statNames.length;i+=2){
+  const s1=statNames[i],s2=statNames[i+1];
+  let line='  '+bar(b.stats[s1],statColors[i])+' '+s1.slice(0,3);
+  if(s2) line+=' '+bar(b.stats[s2],statColors[i+1])+' '+s2.slice(0,3);
+  console.log(line);
+}
 console.log('');
 console.log('  \\x1b[2m"'+b.soul+'"'+R);
 console.log('');
@@ -119,6 +112,8 @@ export function generateInstallScript(buddy: Buddy, baseUrl: string): string {
     {
       species: buddy.species,
       rarity: buddy.rarity,
+      eye: buddy.eye,
+      hat: buddy.hat,
       isShiny: buddy.isShiny,
       palette: buddy.palette,
       sprite: "SPRITE_PLACEHOLDER",
@@ -132,11 +127,11 @@ export function generateInstallScript(buddy: Buddy, baseUrl: string): string {
   );
 
   const rarityColor: Record<string, string> = {
-    Common: "\\x1b[37m",
-    Uncommon: "\\x1b[32m",
-    Rare: "\\x1b[34m",
-    Epic: "\\x1b[35m",
-    Legendary: "\\x1b[33m",
+    common: "\\x1b[37m",
+    uncommon: "\\x1b[32m",
+    rare: "\\x1b[34m",
+    epic: "\\x1b[35m",
+    legendary: "\\x1b[33m",
   };
   const rc = rarityColor[buddy.rarity] || "";
   const stars = RARITY_STARS[buddy.rarity] || "";

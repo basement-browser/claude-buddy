@@ -1,9 +1,17 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Buddy } from "@/lib/types";
+import { Buddy, STAT_NAMES, RARITY_STARS } from "@/lib/types";
 import { RARITY_COLORS } from "@/lib/species";
 import StatBar from "./StatBar";
+
+const STAT_COLORS: Record<string, string> = {
+  DEBUGGING: "#4ade80",
+  PATIENCE: "#60a5fa",
+  CHAOS: "#f87171",
+  WISDOM: "#c084fc",
+  SNARK: "#fbbf24",
+};
 
 interface InfoPanelProps {
   currentColor: string | null;
@@ -57,7 +65,7 @@ export default function InfoPanel({ currentColor, palette, buddy, isComplete, on
             <div className="te-groove my-1" />
 
             <div className="flex items-center gap-2">
-              <div className="text-[11px] font-pixel text-[#F5F0EB]">
+              <div className="text-[11px] font-pixel text-[#F5F0EB] capitalize">
                 {buddy.species}
               </div>
               <span
@@ -68,7 +76,7 @@ export default function InfoPanel({ currentColor, palette, buddy, isComplete, on
                   border: `1px solid ${RARITY_COLORS[buddy.rarity]}40`,
                 }}
               >
-                {buddy.rarity}
+                {RARITY_STARS[buddy.rarity]} {buddy.rarity}
               </span>
               {buddy.isShiny && (
                 <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-[#f59e0b20] text-[#f59e0b] border border-[#f59e0b40]">
@@ -77,12 +85,23 @@ export default function InfoPanel({ currentColor, palette, buddy, isComplete, on
               )}
             </div>
 
+            {/* Eye & Hat */}
+            <div className="flex items-center gap-3 text-[9px] font-mono text-[#8A8480]">
+              <span>Eye: {buddy.eye}</span>
+              {buddy.hat !== "none" && <span>Hat: {buddy.hat}</span>}
+            </div>
+
             {/* Stats */}
             <div className="flex flex-col gap-1.5 mt-1">
-              <StatBar label="Vibe" value={buddy.stats.vibe} color="#4ade80" delay={0} />
-              <StatBar label="Chaos" value={buddy.stats.chaos} color="#f87171" delay={0.1} />
-              <StatBar label="Focus" value={buddy.stats.focus} color="#60a5fa" delay={0.2} />
-              <StatBar label="Luck" value={buddy.stats.luck} color="#fbbf24" delay={0.3} />
+              {STAT_NAMES.map((name, i) => (
+                <StatBar
+                  key={name}
+                  label={name}
+                  value={buddy.stats[name]}
+                  color={STAT_COLORS[name]}
+                  delay={i * 0.1}
+                />
+              ))}
             </div>
 
             {/* Soul */}

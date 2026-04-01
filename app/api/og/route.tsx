@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { generateBuddy } from "@/lib/generate-buddy";
 import { RARITY_COLORS } from "@/lib/species";
+import { STAT_NAMES, RARITY_STARS } from "@/lib/types";
 
 export const runtime = "edge";
 
@@ -10,10 +11,11 @@ const PIXEL = 24;
 const SPRITE_SIZE = GRID * PIXEL; // 384px
 
 const STAT_COLORS: Record<string, string> = {
-  VIBE: "#4ade80",
+  DEBUGGING: "#4ade80",
+  PATIENCE: "#60a5fa",
   CHAOS: "#f87171",
-  FOCUS: "#60a5fa",
-  LUCK: "#fbbf24",
+  WISDOM: "#c084fc",
+  SNARK: "#fbbf24",
 };
 
 export async function GET(request: Request) {
@@ -41,12 +43,10 @@ export async function GET(request: Request) {
     }
   }
 
-  const stats = [
-    { label: "VIBE", value: buddy.stats.vibe },
-    { label: "CHAOS", value: buddy.stats.chaos },
-    { label: "FOCUS", value: buddy.stats.focus },
-    { label: "LUCK", value: buddy.stats.luck },
-  ];
+  const stats = STAT_NAMES.map((name) => ({
+    label: name,
+    value: buddy.stats[name],
+  }));
 
   return new ImageResponse(
     (
@@ -217,6 +217,7 @@ export async function GET(request: Request) {
                     fontWeight: 700,
                     color: "#F5F0EB",
                     letterSpacing: "-0.5px",
+                    textTransform: "capitalize",
                   }}
                 >
                   {buddy.isShiny ? `✨ ${buddy.species}` : buddy.species}
@@ -232,9 +233,10 @@ export async function GET(request: Request) {
                     padding: "3px 10px",
                     border: `1px solid ${rarityColor}`,
                     borderRadius: 2,
+                    textTransform: "uppercase",
                   }}
                 >
-                  {buddy.rarity.toUpperCase()}
+                  {RARITY_STARS[buddy.rarity]} {buddy.rarity}
                 </span>
                 {buddy.isShiny && (
                   <span
@@ -259,7 +261,7 @@ export async function GET(request: Request) {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 10,
+                gap: 8,
               }}
             >
               {stats.map((stat) => (
@@ -273,9 +275,9 @@ export async function GET(request: Request) {
                 >
                   <span
                     style={{
-                      fontSize: 18,
+                      fontSize: 14,
                       color: "#8A8480",
-                      width: 68,
+                      width: 90,
                       letterSpacing: "0.05em",
                     }}
                   >
@@ -284,7 +286,7 @@ export async function GET(request: Request) {
                   <div
                     style={{
                       flex: 1,
-                      height: 22,
+                      height: 18,
                       background: "#1A1714",
                       borderRadius: 2,
                       border: "1px solid #2A2520",
@@ -304,7 +306,7 @@ export async function GET(request: Request) {
                   </div>
                   <span
                     style={{
-                      fontSize: 18,
+                      fontSize: 14,
                       color: "#F5F0EB",
                       width: 36,
                       textAlign: "right",
@@ -382,9 +384,10 @@ export async function GET(request: Request) {
               color: "#E8734A",
               letterSpacing: "0.05em",
               textAlign: "right",
+              textTransform: "uppercase",
             }}
           >
-            BUDDY HATCHED — {buddy.species.toUpperCase()}
+            BUDDY HATCHED — {buddy.species}
           </span>
         </div>
       </div>

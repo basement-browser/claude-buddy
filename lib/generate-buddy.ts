@@ -1,78 +1,112 @@
 import { mulberry32, hashString } from "./prng";
-import { SPECIES_LIST } from "./species";
+import { SPECIES_DATA } from "./species";
 import { SPRITES } from "./sprites";
-import { Buddy, Species, Rarity } from "./types";
+import {
+  Buddy,
+  Species,
+  Rarity,
+  Eye,
+  Hat,
+  StatName,
+  SPECIES,
+  RARITIES,
+  RARITY_WEIGHTS,
+  EYES,
+  HATS,
+  STAT_NAMES,
+} from "./types";
 
-interface WeightedSpecies {
-  species: Species;
-  rarity: Rarity;
-  cumulativeWeight: number;
+const SALT = "friend-2026-401";
+
+function pick<T>(rng: () => number, arr: readonly T[]): T {
+  return arr[Math.floor(rng() * arr.length)]!;
 }
 
-const WEIGHTED_TABLE: WeightedSpecies[] = (() => {
-  const rarityWeights: Record<Rarity, number> = {
-    Common: 0.45,
-    Uncommon: 0.30,
-    Rare: 0.15,
-    Epic: 0.07,
-    Legendary: 0.03,
-  };
-
-  const rarityCounts: Record<Rarity, number> = { Common: 0, Uncommon: 0, Rare: 0, Epic: 0, Legendary: 0 };
-  for (const s of SPECIES_LIST) rarityCounts[s.rarity]++;
-
-  const table: WeightedSpecies[] = [];
-  let cumulative = 0;
-  for (const s of SPECIES_LIST) {
-    const weight = rarityWeights[s.rarity] / rarityCounts[s.rarity];
-    cumulative += weight;
-    table.push({ species: s.name, rarity: s.rarity, cumulativeWeight: cumulative });
+function rollRarity(rng: () => number): Rarity {
+  const total = Object.values(RARITY_WEIGHTS).reduce((a, b) => a + b, 0);
+  let roll = rng() * total;
+  for (const rarity of RARITIES) {
+    roll -= RARITY_WEIGHTS[rarity];
+    if (roll < 0) return rarity;
   }
-  return table;
-})();
+  return "common";
+}
+
+const RARITY_FLOOR: Record<Rarity, number> = {
+  common: 5,
+  uncommon: 15,
+  rare: 25,
+  epic: 35,
+  legendary: 50,
+};
+
+// One peak stat, one dump stat, rest scattered. Rarity bumps the floor.
+function rollStats(
+  rng: () => number,
+  rarity: Rarity,
+): Record<StatName, number> {
+  const floor = RARITY_FLOOR[rarity];
+  const peak = pick(rng, STAT_NAMES);
+  let dump = pick(rng, STAT_NAMES);
+  while (dump === peak) dump = pick(rng, STAT_NAMES);
+
+  const stats = {} as Record<StatName, number>;
+  for (const name of STAT_NAMES) {
+    if (name === peak) {
+      stats[name] = Math.min(100, floor + 50 + Math.floor(rng() * 30));
+    } else if (name === dump) {
+      stats[name] = Math.max(1, floor - 10 + Math.floor(rng() * 15));
+    } else {
+      stats[name] = floor + Math.floor(rng() * 40);
+    }
+  }
+  return stats;
+}
 
 export function generateBuddy(input: string): Buddy {
-  const seed = hashString(input);
+  const key = input + SALT;
+  const seed = hashString(key);
   const rng = mulberry32(seed);
 
-  // Species selection
-  const speciesRoll = rng();
-  let selectedIdx = 0;
-  for (let i = 0; i < WEIGHTED_TABLE.length; i++) {
-    if (speciesRoll < WEIGHTED_TABLE[i].cumulativeWeight) {
-      selectedIdx = i;
-      break;
-    }
-    if (i === WEIGHTED_TABLE.length - 1) selectedIdx = i;
-  }
-  const speciesEntry = SPECIES_LIST[selectedIdx];
+  // Roll rarity first (independent of species)
+  const rarity = rollRarity(rng);
 
-  // Shiny check (4%)
-  const isShiny = rng() < 0.04;
+  // Pick species from the full 18 list
+  const species: Species = pick(rng, SPECIES);
 
-  // Stats (1-99)
-  const stats = {
-    vibe: Math.floor(rng() * 99) + 1,
-    chaos: Math.floor(rng() * 99) + 1,
-    focus: Math.floor(rng() * 99) + 1,
-    luck: Math.floor(rng() * 99) + 1,
-  };
+  // Pick eye
+  const eye: Eye = pick(rng, EYES);
+
+  // Hat: only non-common rarities get hats
+  const hat: Hat = rarity === "common" ? "none" : pick(rng, HATS);
+
+  // Shiny check (1% — matches source)
+  const isShiny = rng() < 0.01;
+
+  // Stats with peak/dump system
+  const stats = rollStats(rng, rarity);
+
+  // Inspiration seed (consumed to stay in sync with source)
+  const _inspirationSeed = Math.floor(rng() * 1e9);
 
   // Soul description
-  const soulIdx = Math.floor(rng() * speciesEntry.soulDescriptions.length);
-  const soulDescription = speciesEntry.soulDescriptions[soulIdx];
+  const speciesData = SPECIES_DATA[species];
+  const soulIdx = Math.floor(rng() * speciesData.soulDescriptions.length);
+  const soulDescription = speciesData.soulDescriptions[soulIdx];
 
   // Palette
-  const palette = isShiny ? speciesEntry.shinyPalette : speciesEntry.palette;
+  const palette = isShiny ? speciesData.shinyPalette : speciesData.palette;
 
   return {
-    species: speciesEntry.name,
-    rarity: speciesEntry.rarity,
+    species,
+    rarity,
+    eye,
+    hat,
     isShiny,
     stats,
     soulDescription,
     palette,
-    sprite: SPRITES[speciesEntry.name],
+    sprite: SPRITES[species],
     name: input,
   };
 }

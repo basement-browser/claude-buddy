@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { generateBuddy } from "@/lib/generate-buddy";
 import { SPECIES_LIST } from "@/lib/species";
+import { STAT_NAMES, SPECIES } from "@/lib/types";
 import ClaudeBuddyPage from "@/components/ClaudeBuddyPage";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://claudebuddy.me";
@@ -19,7 +20,8 @@ export async function generateMetadata({
   const buddy = generateBuddy(name);
   const shinyLabel = buddy.isShiny ? "Shiny " : "";
   const title = `${shinyLabel}${buddy.species} — Claude Buddy`;
-  const description = `${buddy.rarity} ${shinyLabel}${buddy.species} — Vibe: ${buddy.stats.vibe} / Chaos: ${buddy.stats.chaos} / Focus: ${buddy.stats.focus} / Luck: ${buddy.stats.luck}. "${buddy.soulDescription}"`;
+  const statLine = STAT_NAMES.map((s) => `${s}: ${buddy.stats[s]}`).join(" / ");
+  const description = `${buddy.rarity} ${shinyLabel}${buddy.species} — ${statLine}. "${buddy.soulDescription}"`;
   const ogImageUrl = `${siteUrl}/api/og?name=${encodeURIComponent(name)}`;
 
   return {
@@ -51,11 +53,11 @@ export async function generateMetadata({
 }
 
 const RARITY_TIERS = [
-  { name: "Common", chance: "45%", species: "Blobbit, Gruntle, Pebblix, Snorb" },
-  { name: "Uncommon", chance: "30%", species: "Flickmouse, Mosscap, Dustbunni" },
-  { name: "Rare", chance: "15%", species: "Glimworm, Thornpup" },
-  { name: "Epic", chance: "7%", species: "Voidmaw, Crystalfin" },
-  { name: "Legendary", chance: "3%", species: "Nebulynx" },
+  { name: "Common", chance: "60%", description: "Any species can appear at common rarity" },
+  { name: "Uncommon", chance: "25%", description: "Unlocks hat accessories" },
+  { name: "Rare", chance: "10%", description: "Higher stat floors" },
+  { name: "Epic", chance: "4%", description: "Strong stats with rare hats" },
+  { name: "Legendary", chance: "1%", description: "The rarest roll — peak stats" },
 ];
 
 export default function Home() {
@@ -75,10 +77,11 @@ export default function Home() {
           produces the same buddy — your companion is yours forever.
         </p>
         <p className="mb-8 leading-relaxed">
-          There are <strong>12 species</strong> across{" "}
+          There are <strong>{SPECIES.length} species</strong> across{" "}
           <strong>5 rarity tiers</strong> (Common, Uncommon, Rare, Epic,
-          Legendary), with a <strong>1-in-20 chance</strong> of a shiny variant
-          featuring an alternate color palette.
+          Legendary), with a <strong>1-in-100 chance</strong> of a shiny variant
+          featuring an alternate color palette. Any species can appear at any
+          rarity — rarity is rolled independently.
         </p>
 
         <h2 className="text-2xl font-bold text-[#F5F0EB] mb-6">
@@ -91,8 +94,8 @@ export default function Home() {
           </li>
           <li>
             <strong>Watch it hatch</strong> — your unique pixel buddy is drawn
-            pixel-by-pixel on a CRT-style screen. Species, rarity, stats, and
-            colors are all determined by your name.
+            pixel-by-pixel on a CRT-style screen. Species, rarity, stats, eye,
+            hat, and colors are all determined by your name.
           </li>
           <li>
             <strong>Export or install</strong> — save as PNG, share via URL, or
@@ -101,15 +104,15 @@ export default function Home() {
         </ol>
 
         <h2 className="text-2xl font-bold text-[#F5F0EB] mb-6">
-          Species &amp; Rarity Tiers
+          Rarity Tiers
         </h2>
-        <div className="overflow-x-auto mb-8">
+        <div className="overflow-x-auto mb-4">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[#3A3530]">
                 <th className="py-3 pr-4 text-[#F5F0EB] font-semibold">Rarity</th>
                 <th className="py-3 pr-4 text-[#F5F0EB] font-semibold">Chance</th>
-                <th className="py-3 text-[#F5F0EB] font-semibold">Species</th>
+                <th className="py-3 text-[#F5F0EB] font-semibold">Description</th>
               </tr>
             </thead>
             <tbody>
@@ -117,25 +120,30 @@ export default function Home() {
                 <tr key={tier.name} className="border-b border-[#2A2520]">
                   <td className="py-3 pr-4 font-medium">{tier.name}</td>
                   <td className="py-3 pr-4">{tier.chance}</td>
-                  <td className="py-3">{tier.species}</td>
+                  <td className="py-3">{tier.description}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <p className="mb-8 text-sm leading-relaxed">
+          Rarity is independent of species — any of the 18 species can appear at
+          any rarity tier. Higher rarities unlock hats and have higher stat floors.
+        </p>
 
         <h2 className="text-2xl font-bold text-[#F5F0EB] mb-6">
           Buddy Stats
         </h2>
         <p className="mb-4 leading-relaxed">
-          Every buddy has four stats from 0 to 100, generated from your name
-          hash:
+          Every buddy has five stats, generated with a peak/dump system based on
+          rarity. Higher rarities have higher stat floors:
         </p>
         <ul className="list-disc list-inside mb-8 space-y-2 leading-relaxed">
-          <li><strong>Vibe</strong> — how chill your buddy is</li>
-          <li><strong>Chaos</strong> — how unpredictable your buddy is</li>
-          <li><strong>Focus</strong> — how attentive your buddy is</li>
-          <li><strong>Luck</strong> — how lucky your buddy is</li>
+          <li><strong>Debugging</strong> — bug-finding prowess</li>
+          <li><strong>Patience</strong> — how long they&apos;ll wait for your build</li>
+          <li><strong>Chaos</strong> — unpredictability factor</li>
+          <li><strong>Wisdom</strong> — code review insight</li>
+          <li><strong>Snark</strong> — sass level in comments</li>
         </ul>
 
         <h2 className="text-2xl font-bold text-[#F5F0EB] mb-6">
@@ -186,7 +194,7 @@ export default function Home() {
               What is a shiny buddy?
             </dt>
             <dd className="mt-1 leading-relaxed">
-              Shiny buddies are rare variants (5% chance) with alternate color
+              Shiny buddies are rare variants (1% chance) with alternate color
               palettes. They have the same species and stats but a unique,
               glowing appearance.
             </dd>
@@ -202,8 +210,7 @@ export default function Home() {
               key={species.name}
               className="p-3 rounded-lg border border-[#2A2520] bg-[#1E1B18]"
             >
-              <p className="font-semibold text-[#F5F0EB]">{species.name}</p>
-              <p className="text-xs mt-1">{species.rarity}</p>
+              <p className="font-semibold text-[#F5F0EB] capitalize">{species.name}</p>
             </div>
           ))}
         </div>

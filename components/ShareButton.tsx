@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Buddy } from "@/lib/types";
+import { Buddy, STAT_NAMES } from "@/lib/types";
 
 interface ShareButtonProps {
   buddy: Buddy;
@@ -15,8 +15,10 @@ function getShareText(buddy: Buddy) {
       ? `${window.location.origin}?name=${encodeURIComponent(buddy.name)}`
       : "";
 
+  const statLine = STAT_NAMES.map((name) => `${name}: ${buddy.stats[name]}`).join(" / ");
+
   return {
-    text: `I just hatched a ${shinyLabel}${buddy.species} in Claude Buddy!\n\n${buddy.rarity} — Vibe: ${buddy.stats.vibe} / Chaos: ${buddy.stats.chaos} / Focus: ${buddy.stats.focus} / Luck: ${buddy.stats.luck}\n\n"${buddy.soulDescription}"\n\nHatch yours:`,
+    text: `I just hatched a ${shinyLabel}${buddy.species} in Claude Buddy!\n\n${buddy.rarity} — ${statLine}\n\n"${buddy.soulDescription}"\n\nHatch yours:`,
     url,
   };
 }
