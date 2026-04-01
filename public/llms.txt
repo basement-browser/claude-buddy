@@ -1,0 +1,45 @@
+# Claude Buddy
+
+> Claude Buddy is a free web-based pixel companion generator built on Claude Code's hidden gacha system. Enter any name or your Claude Code user ID and hatch a unique, deterministic pixel creature.
+
+## What is Claude Buddy?
+
+Claude Buddy is a fan-made tool that generates unique pixel art companions from Claude Code's built-in buddy system. Each buddy is deterministically generated from a name hash — the same name always produces the same buddy. There are 12 species across 5 rarity tiers (Common, Uncommon, Rare, Epic, Legendary), with a 1-in-20 chance of a shiny variant.
+
+## How It Works
+
+1. Enter any name or sync your Claude Code user ID
+2. The name is hashed to deterministically select a species, rarity, stats, palette, and sprite
+3. The buddy is drawn pixel-by-pixel on a 16x16 grid with a CRT-style animation
+4. You can export the buddy as a PNG or install it as your Claude Code statusline companion
+
+## Species List
+
+- **Common (45%):** Blobbit, Gruntle, Pebblix, Snorb
+- **Uncommon (30%):** Flickmouse, Mosscap, Dustbunni
+- **Rare (15%):** Glimworm, Thornpup
+- **Epic (7%):** Voidmaw, Crystalfin
+- **Legendary (3%):** Nebulynx
+
+## Stats
+
+Each buddy has four stats (0-100): Vibe, Chaos, Focus, and Luck.
+
+## Features
+
+- Deterministic generation: same name = same buddy, always
+- 12 unique species with distinct pixel art sprites
+- 5 rarity tiers with weighted probability
+- Shiny variants (5% chance) with alternate color palettes
+- Export to PNG
+- Install as Claude Code statusline companion
+- Shareable URLs with OpenGraph preview images
+- Sync with your Claude Code user ID
+
+## URL
+
+https://claudebuddy.me
+
+## Built By
+
+Basement Team — https://basementbrowser.com
