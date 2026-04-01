@@ -44,7 +44,7 @@ export default function SyncSection({ onHatch, isDrawing }: SyncSectionProps) {
         onClick={() => setExpanded(true)}
         className="te-button text-[9px] w-full"
       >
-        Sync with Claude Code
+        Use Claude Code ID
       </button>
     );
   }
@@ -52,7 +52,7 @@ export default function SyncSection({ onHatch, isDrawing }: SyncSectionProps) {
   return (
     <div className="te-inset p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="te-label">Sync with Claude Code</span>
+        <span className="te-label">Hatch from Claude Code ID</span>
         <button
           onClick={() => setExpanded(false)}
           className="text-[9px] font-mono text-[#5A5550] hover:text-[#8A8480] transition-colors"
@@ -63,7 +63,7 @@ export default function SyncSection({ onHatch, isDrawing }: SyncSectionProps) {
 
       <div className="mb-2">
         <div className="text-[9px] font-mono text-[#8A8480] mb-1">
-          Run this in your terminal:
+          1. Run this in your terminal to get your ID:
         </div>
         <div className="flex items-center gap-1">
           <code className="flex-1 text-[9px] font-mono text-[#8A8480] bg-[#0D0E0C] border border-[#2A2520] rounded px-2 py-1.5 overflow-x-auto whitespace-nowrap">
@@ -80,7 +80,7 @@ export default function SyncSection({ onHatch, isDrawing }: SyncSectionProps) {
 
       <div>
         <div className="text-[9px] font-mono text-[#8A8480] mb-1">
-          Paste your userId:
+          2. Paste it here to hatch your unique buddy:
         </div>
         <div className="flex items-center gap-2">
           <div className="flex-1 flex items-center te-inset px-2 py-1.5">
