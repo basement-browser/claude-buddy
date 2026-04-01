@@ -72,6 +72,28 @@ if (fs.existsSync(BUDDY_DIR)) {
   console.log(GREEN + '  \\u2713' + R + ' Removed ' + DIM + '~/.claude/buddy/' + R);
 }
 
+// Auto-remove shell alias
+const shell = process.env.SHELL || '';
+let rcFile = p.join(HOME, '.bashrc');
+let rcName = '~/.bashrc';
+if (shell.includes('zsh')) { rcFile = p.join(HOME, '.zshrc'); rcName = '~/.zshrc'; }
+else if (shell.includes('fish')) { rcFile = p.join(HOME, '.config', 'fish', 'config.fish'); rcName = '~/.config/fish/config.fish'; }
+if (fs.existsSync(rcFile)) {
+  try {
+    const rc = fs.readFileSync(rcFile, 'utf8');
+    if (rc.includes('.claude/buddy/claude')) {
+      // Remove the alias line and its comment
+      const cleaned = rc
+        .split('\\n')
+        .filter(l => !l.includes('.claude/buddy/claude') && !l.includes('# Claude Buddy - shows your buddy'))
+        .join('\\n')
+        .replace(/\\n{3,}/g, '\\n\\n'); // collapse extra blank lines
+      fs.writeFileSync(rcFile, cleaned);
+      console.log(GREEN + '  \\u2713' + R + ' Removed shell alias from ' + DIM + rcName + R);
+    }
+  } catch {}
+}
+
 console.log('');
 if (buddyName) {
   console.log('  ' + DIM + buddyName + ' has been released back into the wild.' + R);

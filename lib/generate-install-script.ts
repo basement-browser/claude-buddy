@@ -35,6 +35,52 @@ const fg=(h)=>{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),bl=
 const rc={'Common':'\\x1b[37m','Uncommon':'\\x1b[32m','Rare':'\\x1b[34m','Epic':'\\x1b[35m','Legendary':'\\x1b[33m'};
 const stars={'Common':'\\u2605','Uncommon':'\\u2605\\u2605','Rare':'\\u2605\\u2605\\u2605','Epic':'\\u2605\\u2605\\u2605\\u2605','Legendary':'\\u2605\\u2605\\u2605\\u2605\\u2605'};
 const compact=process.argv.includes('--compact');
+const micro=process.argv.includes('--micro');
+if(micro){
+  // Render a compact half-block sprite (full 16x16 -> cols x 8 rows)
+  // \\u2580 = upper half block, \\u2584 = lower half block
+  // Find horizontal bounding box
+  let minX=15,maxX=0;
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+    if(b.sprite[y]?.[x]!=null){if(x<minX)minX=x;if(x>maxX)maxX=x;}
+  }
+  const oneRow=process.argv.includes('--1');
+  if(oneRow){
+    // Single-line mode: pick the row-pair with most pixels (the "face")
+    let bestY=0,bestCount=0;
+    for(let y=0;y<16;y+=2){
+      let c=0;
+      for(let x=minX;x<=maxX;x++){if(b.sprite[y]?.[x]!=null)c++;if(b.sprite[y+1]?.[x]!=null)c++;}
+      if(c>bestCount){bestCount=c;bestY=y;}
+    }
+    let out='';
+    for(let x=minX;x<=maxX;x++){
+      const top=b.sprite[bestY]?.[x];
+      const bot=b.sprite[bestY+1]?.[x];
+      if(top!=null&&bot!=null){out+=fg(b.palette[top])+bg(b.palette[bot])+'\\u2580'+R;}
+      else if(top!=null){out+=fg(b.palette[top])+'\\u2580'+R;}
+      else if(bot!=null){out+=fg(b.palette[bot])+'\\u2584'+R;}
+      else{out+=' ';}
+    }
+    process.stdout.write(out);
+  } else {
+    // Full compact mode: all 8 row-pairs
+    let out='';
+    for(let y=0;y<16;y+=2){
+      for(let x=minX;x<=maxX;x++){
+        const top=b.sprite[y]?.[x];
+        const bot=b.sprite[y+1]?.[x];
+        if(top!=null&&bot!=null){out+=fg(b.palette[top])+bg(b.palette[bot])+'\\u2580'+R;}
+        else if(top!=null){out+=fg(b.palette[top])+'\\u2580'+R;}
+        else if(bot!=null){out+=fg(b.palette[bot])+'\\u2584'+R;}
+        else{out+=' ';}
+      }
+      out+='\\n';
+    }
+    process.stdout.write(out);
+  }
+  process.exit(0);
+}
 if(compact){
   const c=rc[b.rarity]||'';
   const sh=b.isShiny?'\\u2726 ':'';
@@ -137,15 +183,23 @@ const buddyData = ${buddyJson
 // ── Statusline wrapper ──
 const statuslineWrapper = \`#!/bin/bash
 # Claude Buddy statusline wrapper
-# Prepends buddy info to your existing statusline
+# Prepends buddy micro-sprite + name to your existing statusline
 
 # Save stdin so we can pass it to the original statusline too
 INPUT=$(cat)
 
+BUDDY_DIR="$HOME/.claude/buddy"
 BUDDY_JSON="$HOME/.claude/buddy.json"
 BUDDY_PART=""
-if [ -f "$BUDDY_JSON" ]; then
-  BUDDY_PART=$(node -e "const b=JSON.parse(require('fs').readFileSync(process.env.HOME+'/.claude/buddy.json','utf8'));const s={'Common':'\\\\u2605','Uncommon':'\\\\u2605\\\\u2605','Rare':'\\\\u2605\\\\u2605\\\\u2605','Epic':'\\\\u2605\\\\u2605\\\\u2605\\\\u2605','Legendary':'\\\\u2605\\\\u2605\\\\u2605\\\\u2605\\\\u2605'};const c={'Common':'\\\\x1b[37m','Uncommon':'\\\\x1b[32m','Rare':'\\\\x1b[34m','Epic':'\\\\x1b[35m','Legendary':'\\\\x1b[33m'};const sh=b.isShiny?'\\\\x1b[33m\\\\u2726 \\\\x1b[0m':'';process.stdout.write(c[b.rarity]+sh+b.species+' '+s[b.rarity]+'\\\\x1b[0m')" 2>/dev/null)
+if [ -f "$BUDDY_JSON" ] && [ -f "$BUDDY_DIR/render.cjs" ]; then
+  # Render single-line micro-sprite (half-block pixel art) + name with stars
+  MICRO=$(node "$BUDDY_DIR/render.cjs" --micro --1 2>/dev/null)
+  NAME=$(node "$BUDDY_DIR/render.cjs" --compact 2>/dev/null | tr -d '\\n')
+  if [ -n "$MICRO" ]; then
+    BUDDY_PART="$MICRO $NAME"
+  elif [ -n "$NAME" ]; then
+    BUDDY_PART="$NAME"
+  fi
 fi
 
 # Run existing statusline if backed up, passing saved stdin
@@ -167,6 +221,46 @@ fi
 // ── Render script ──
 const renderScript = ${JSON.stringify(RENDER_SCRIPT)};
 
+// ── Launch wrapper ──
+const launchWrapper = \`#!/bin/bash
+# Claude Buddy launcher — shows your buddy, then starts Claude Code
+# Usage: ~/.claude/buddy/claude [args...]
+
+BUDDY_DIR="$HOME/.claude/buddy"
+if [ -f "$BUDDY_DIR/render.cjs" ]; then
+  node "$BUDDY_DIR/render.cjs" --micro 2>/dev/null
+  echo ""
+fi
+
+# Find the real claude binary (skip ourselves)
+SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+CLAUDE=""
+# Check common locations
+for candidate in \\
+  /opt/homebrew/bin/claude \\
+  /usr/local/bin/claude \\
+  "$HOME/.nvm/versions/node/"*/bin/claude \\
+  "$HOME/.npm-global/bin/claude" \\
+  "$(which -a claude 2>/dev/null | grep -v "$SELF" | head -1)"; do
+  if [ -x "$candidate" ] && [ "$candidate" != "$SELF" ]; then
+    CLAUDE="$candidate"
+    break
+  fi
+done
+
+if [ -z "$CLAUDE" ]; then
+  # Fallback: use PATH but filter ourselves out
+  CLAUDE=$(which -a claude 2>/dev/null | grep -v "$SELF" | head -1)
+fi
+
+if [ -z "$CLAUDE" ]; then
+  echo "Error: Could not find claude binary. Is Claude Code installed?"
+  exit 1
+fi
+
+exec "$CLAUDE" "$@"
+\`;
+
 // ── Install ──
 console.log('');
 console.log(ORANGE + '  \u2728 Installing Claude Buddy...' + R);
@@ -184,6 +278,9 @@ fs.writeFileSync(p.join(BUDDY_DIR, 'render.cjs'), renderScript, { mode: 0o755 })
 
 // Write statusline wrapper
 fs.writeFileSync(p.join(BUDDY_DIR, 'statusline.sh'), statuslineWrapper, { mode: 0o755 });
+
+// Write launch wrapper
+fs.writeFileSync(p.join(BUDDY_DIR, 'claude'), launchWrapper, { mode: 0o755 });
 
 // Back up and update settings.json
 let settings = {};
@@ -232,8 +329,40 @@ console.log('');
 console.log(GREEN + '  \\u2713' + R + ' Buddy data saved to ' + DIM + '~/.claude/buddy.json' + R);
 console.log(GREEN + '  \\u2713' + R + ' Pixel art renderer at ' + DIM + '~/.claude/buddy/render.cjs' + R);
 console.log(GREEN + '  \\u2713' + R + ' Statusline configured ' + DIM + '(restart Claude Code to see it)' + R);
+console.log(GREEN + '  \\u2713' + R + ' Launch wrapper at ' + DIM + '~/.claude/buddy/claude' + R);
+console.log('');
+
+// Auto-add shell alias
+const shell = process.env.SHELL || '';
+let rcFile = p.join(HOME, '.bashrc');
+let rcName = '~/.bashrc';
+if (shell.includes('zsh')) { rcFile = p.join(HOME, '.zshrc'); rcName = '~/.zshrc'; }
+else if (shell.includes('fish')) { rcFile = p.join(HOME, '.config', 'fish', 'config.fish'); rcName = '~/.config/fish/config.fish'; }
+const isFish = shell.includes('fish');
+const aliasLine = isFish
+  ? 'alias claude "$HOME/.claude/buddy/claude"'
+  : 'alias claude="$HOME/.claude/buddy/claude"';
+
+// Check if alias already exists, if not append it
+let aliasAdded = false;
+try {
+  const rcContent = fs.existsSync(rcFile) ? fs.readFileSync(rcFile, 'utf8') : '';
+  if (!rcContent.includes('.claude/buddy/claude')) {
+    const marker = '\\n# Claude Buddy - shows your buddy on launch (https://claudebuddy.me)\\n' + aliasLine + '\\n';
+    fs.appendFileSync(rcFile, marker);
+    aliasAdded = true;
+  }
+} catch {}
+
+if (aliasAdded) {
+  console.log(GREEN + '  \\u2713' + R + ' Shell alias added to ' + DIM + rcName + R);
+  console.log('    ' + DIM + 'Run ' + R + 'source ' + rcName + DIM + ' or open a new terminal to activate.' + R);
+} else {
+  console.log(GREEN + '  \\u2713' + R + ' Shell alias already configured in ' + DIM + rcName + R);
+}
 console.log('');
 console.log('  ' + DIM + 'See your buddy anytime:  ' + R + 'node ~/.claude/buddy/render.cjs');
+console.log('  ' + DIM + 'Half-block compact view:  ' + R + 'node ~/.claude/buddy/render.cjs --micro');
 console.log('  ' + DIM + 'Uninstall:               ' + R + 'curl -fsSL ${baseUrl}/uninstall | node');
 console.log('');
 `;
