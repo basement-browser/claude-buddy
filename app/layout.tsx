@@ -76,6 +76,9 @@ export const metadata: Metadata = {
       "Generate your own unique Claude Buddy pixel companion! 12 species, 5 rarities, shiny variants. Enter your name → get your buddy.",
   },
   category: "entertainment",
+  verification: {
+    google: "RfpiirFHc_b4mjKKh4Gs0aoaJ5xYjBnAwMAr6ZOkxOo",
+  },
 };
 
 const jsonLd = [
