@@ -100,10 +100,10 @@ function ClaudeBuddyInner() {
   }, [initialName, handleHatch]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-3 md:p-6 lg:p-8">
-      <div className="device-shell w-full max-w-[1200px]">
+    <div className="flex items-center justify-center h-dvh w-full p-2 md:p-4 lg:p-5 overflow-hidden">
+      <div className="device-shell w-full h-full max-h-dvh flex flex-col">
         {/* ── Device Header ── */}
-        <div className="flex items-center justify-between px-4 lg:px-5 py-3 border-b border-[#3A3530]">
+        <div className="flex items-center justify-between px-4 lg:px-5 py-3 border-b border-[#3A3530] shrink-0">
           <div className="flex items-center gap-3">
             <div className="te-led" />
             <h1 className="font-mono text-[10px] lg:text-[11px] font-bold tracking-[0.15em] uppercase text-[#F5F0EB]">
@@ -116,12 +116,12 @@ function ClaudeBuddyInner() {
         </div>
 
         {/* ── Main Body: Horizontal on desktop, vertical on mobile ── */}
-        <div className="flex flex-col lg:flex-row">
+        <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
 
           {/* ── Left: CRT Screen ── */}
-          <div className="flex-1 min-w-0 p-3 md:p-4 lg:p-5">
-            <div className="crt-bezel">
-              <div className="crt-screen" style={{ aspectRatio: "1 / 1" }}>
+          <div className="flex-1 min-w-0 min-h-0 p-3 md:p-4 lg:p-5 flex items-center justify-center">
+            <div className="crt-bezel w-full h-full max-h-full">
+              <div className="crt-screen w-full h-full" style={{ aspectRatio: "1 / 1", maxHeight: "100%", maxWidth: "100%" }}>
                 <div ref={containerRef} className="w-full h-full relative">
                   <BuddyCanvas
                     ref={canvasRef}
@@ -149,7 +149,7 @@ function ClaudeBuddyInner() {
           </div>
 
           {/* ── Right: Control Panel (scrollable on desktop) ── */}
-          <div className="lg:w-[320px] xl:w-[360px] lg:border-l border-t lg:border-t-0 border-[#3A3530] lg:overflow-y-auto lg:max-h-[calc(100vh-140px)]">
+          <div className="lg:w-[320px] xl:w-[360px] shrink-0 lg:border-l border-t lg:border-t-0 border-[#3A3530] overflow-y-auto">
             <div className="flex flex-col gap-4 p-3 md:p-4 lg:p-5">
 
               {/* Input */}
@@ -203,8 +203,8 @@ function ClaudeBuddyInner() {
         </div>
 
         {/* ── Footer ── */}
-        <div className="te-groove" />
-        <div className="flex items-center justify-between px-4 lg:px-5 py-3">
+        <div className="te-groove shrink-0" />
+        <div className="flex items-center justify-between px-4 lg:px-5 py-3 shrink-0">
           <a
             href="https://basementbrowser.com"
             target="_blank"

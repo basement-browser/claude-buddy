@@ -33,7 +33,7 @@ export default function HatchInput({ onHatch, initialName, isDrawing }: HatchInp
           onChange={(e) => setName(e.target.value)}
           placeholder="enter your name to hatch a buddy..."
           disabled={isDrawing}
-          className="flex-1 bg-transparent text-[#F5F0EB] text-sm font-mono outline-none placeholder-[#5A5550] caret-[#E8734A] disabled:opacity-50"
+          className="flex-1 bg-transparent text-[#F5F0EB] text-base font-mono outline-none placeholder-[#5A5550] caret-[#E8734A] disabled:opacity-50"
           autoFocus
         />
       </div>
